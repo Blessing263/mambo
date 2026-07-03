@@ -26,6 +26,11 @@ from .prompt import (
 
 _client = OpenAI(api_key=settings.deepseek_api_key, base_url=settings.deepseek_base_url)
 
+# flash is a reasoning model that "thinks" for ~20-30s before emitting the answer.
+# The endpoint accepts `thinking: {type: disabled}` to skip reasoning — ~3x faster
+# first token, with equivalent cited/structured quality. Applied to every call.
+_NO_THINK = {"thinking": {"type": "disabled"}}
+
 # Strip stale [n] citation markers from prior assistant turns so the model doesn't
 # echo source numbers that don't match the current turn's sources.
 _CITE = re.compile(r"\[\d+\]")
@@ -89,7 +94,8 @@ def classify_intent(question: str) -> str:
             {"role": "user", "content": INTENT_PROMPT.format(question=question)},
         ],
         temperature=0,
-        max_tokens=200,  # room for reasoning + the single-word answer
+        max_tokens=200,
+        extra_body=_NO_THINK,
     )
     raw = (resp.choices[0].message.content or "").strip().lower()
     # The model may output "greeting." or " intent: greeting" — normalise.
@@ -124,9 +130,8 @@ def rewrite_query(question: str, history: list[dict] | None) -> str:
             {"role": "user", "content": build_rewrite_user(question, history[-HISTORY_TURNS:])},
         ],
         temperature=0,
-        # flash is a reasoning model — it spends tokens "thinking" first, so a small
-        # budget yields empty content. Give it room for reasoning + the short query.
         max_tokens=400,
+        extra_body=_NO_THINK,
     )
     rewritten = (resp.choices[0].message.content or "").strip()
     return rewritten or question
@@ -146,6 +151,7 @@ def generate(
         messages=_messages(question, contexts, history, journey),
         temperature=temperature,
         max_tokens=max_tokens,
+        extra_body=_NO_THINK,
     )
     return (resp.choices[0].message.content or "").strip()
 
@@ -165,6 +171,7 @@ def generate_stream(
         temperature=temperature,
         max_tokens=max_tokens,
         stream=True,
+        extra_body=_NO_THINK,
     )
     for chunk in stream:
         delta = chunk.choices[0].delta.content
