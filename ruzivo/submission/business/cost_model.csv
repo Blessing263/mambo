@@ -1,0 +1,13 @@
+item,pilot_monthly_usd,scale_monthly_usd,basis,notes
+"VPS / cloud instance (API + webchat)",25,120,"1 small vCPU pilot → multi-vCPU + RAM at scale","estimate — validate against provider (Hetzner/DigitalOcean/AWS)"
+"Postgres 16 + pgvector (managed or self-hosted)",0,60,"self-hosted pilot → managed at scale","included on-VPS pilot; managed DB at scale"
+"Embeddings — Ollama Qwen3-Embedding-8B",0,40,"CPU warm-cache ~free; GPU for bulk re-embed","live queries ~free warm; periodic bulk embed on RunPod GPU (~$0.10/chunk burst)"
+"Generation — DeepSeek API tokens",15,150,"~$0.1-0.3 per 1k Q at flash pricing","estimate — depends on traffic + model; drops to ~0 if self-hosted open-weight on CCE"
+"Storage + daily backups",5,25,"DB + raw_docs (270MB now; grows with corpus)","estimate"
+"Monitoring + logging",0,20,"self-hosted (Grafana/Prometheus) at scale","estimate"
+"Domain + TLS",1,1,"Let's Encrypt free; domain ~$12/yr","known"
+"Bandwidth / egress",5,40,"mobile-first, low payload; SSE streaming","estimate"
+"Staff review (curate reviewed-answer cache, weekly)",400,1200,"part-time reviewer per ministry batch","the dominant real cost; people, not infra"
+"Maintenance/engineering (part-time)",800,2000,"bug fixes, re-crawl, eval re-runs","estimate"
+"Total (approx, USD/month)",~1250,~3656,"sum","ESTIMATES — to validate with real provider quotes + traffic"
+"Of which infrastructure (ex-staff)",~50,~456,"infra-only subtotal","infra is cheap; people are the cost"
