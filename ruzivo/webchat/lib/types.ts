@@ -29,6 +29,8 @@ export interface DoneMeta {
   citations: Citation[];
   confident: boolean;
   fallback_contact: Contact[] | null;
+  evidence_status?: "answered" | "partial" | "unsupported" | "declined";
+  decline_reason?: string | null;
 }
 
 export interface ChatMessage {

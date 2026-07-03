@@ -101,6 +101,24 @@ export function MinistryBadge({ id, byId }: { id: string; byId: ById }) {
   );
 }
 
+/* ---------- evidence status badge ---------- */
+export function EvidenceBadge({ status }: { status?: string }) {
+  if (!status) return null;
+  const map: Record<string, { label: string; icon: string; color: string }> = {
+    answered:    { label: "Answered from official sources", icon: "verified", color: "var(--accent)" },
+    partial:     { label: "Partial evidence found", icon: "warning", color: "var(--gold)" },
+    unsupported: { label: "No reliable official source — routed to the ministry", icon: "help", color: "var(--text-tertiary)" },
+    declined:    { label: "Outside Ruzivo's scope", icon: "block", color: "var(--red)" },
+  };
+  const e = map[status] ?? map.unsupported;
+  return (
+    <span className="inline-flex items-center gap-1">
+      <span className="material-symbols" style={{ fontSize: 14, color: e.color }}>{e.icon}</span>
+      <span style={{ color: e.color }}>{e.label}</span>
+    </span>
+  );
+}
+
 /* ---------- contact card ---------- */
 export function ContactCard({ c }: { c: Contact }) {
   const all: [string, string | null | undefined][] = [

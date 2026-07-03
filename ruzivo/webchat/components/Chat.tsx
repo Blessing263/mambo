@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import { askStream } from "@/lib/api";
 import type { ChatMessage, Ministry } from "@/lib/types";
-import { AnswerText, CitationCard, ContactCard } from "./AnswerBlocks";
+import { AnswerText, CitationCard, ContactCard, EvidenceBadge } from "./AnswerBlocks";
 import { MinistryPicker } from "./MinistryPicker";
 
 const EXAMPLES = [
@@ -266,7 +266,7 @@ function Footer({ answerText, meta }: { answerText: string; meta: NonNullable<Ch
   }
   return (
     <div className="flex items-center justify-between pt-2" style={{ color: "var(--text-tertiary)", fontSize: 11 }}>
-      <span>{meta.confident ? "Answer from official sources" : "No official source — routed to the ministry"}</span>
+      <EvidenceBadge status={meta.evidence_status} />
       <span className="flex gap-0.5">
         <button aria-label="Copy answer" onClick={onCopy}
           className="rounded p-1 transition hover:text-[var(--text-primary)]"

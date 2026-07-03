@@ -1,4 +1,4 @@
-"""Orchestration: route → retrieve → (confident?) → generate or fall back.
+"""Orchestration: guard → route → retrieve → (confident?) → generate or fall back.
 Also logs every question for analytics ("what citizens ask most"). Public
 questions only; no private data.
 """
@@ -11,7 +11,7 @@ import time
 
 from shared.db import get_conn
 
-from . import llm, retrieval, router, trust
+from . import guard, llm, retrieval, router, trust
 
 _CITE_RE = re.compile(r"\[(\d+)\]")
 K = 6
@@ -27,9 +27,27 @@ _HEDGE = re.compile(
     re.IGNORECASE,
 )
 
+# Evidence-status badge vocabulary surfaced to the UI on every answer.
+#   answered    — grounded in the official corpus, with citations
+#   partial     — answered, but hedging or no citations attached
+#   unsupported — retrieval too weak; fell back to ministry contacts
+#   declined    — out of scope / unsafe (abstention)
+
+
 def _answer_is_hedged(answer: str) -> bool:
     """Fast check: does the answer contain hedging/uncertainty language?"""
     return bool(_HEDGE.search(answer))
+
+
+def _evidence_status(*, confident: bool, answer: str = "",
+                     citations: list | None = None, declined: bool = False) -> str:
+    if declined:
+        return "declined"
+    if not confident:
+        return "unsupported"
+    if _answer_is_hedged(answer) or not citations:
+        return "partial"
+    return "answered"
 
 
 def _contacts_safety_net(answer: str, ministry_ids: list[str]) -> list[dict] | None:
@@ -67,12 +85,11 @@ def _citations_from_answer(answer: str, contexts: list[dict]) -> list[dict]:
     # Deduplicate citations. A citation is a duplicate if EITHER:
     # - same URL (ignoring http/https scheme)
     # - same title (different URLs but same document name)
-    import re as _re
     seen_urls: set[str] = set()
     seen_titles: set[str] = set()
     unique: list[dict] = []
     for c in cites:
-        url = _re.sub(r'^https?://', '', c.get('url') or '').split('#')[0].rstrip('/')
+        url = re.sub(r'^https?://', '', c.get('url') or '').split('#')[0].rstrip('/')
         title_key = (c.get('title') or '').lower().strip()
         if url in seen_urls or title_key in seen_titles:
             continue
@@ -116,7 +133,25 @@ def ask(question: str, *, history: list[dict] | None = None,
         client_ip: str = "", user_agent: str = "") -> dict:
     t0 = time.time()
 
-    # ── Intent gate — catch greetings, thanks, capability, off-topic first ──
+    # ── Safety guard (deterministic, LLM-free) — abstain before any retrieval ──
+    unsafe = guard.detect_unsafe(question)
+    if unsafe:
+        category, ref = unsafe
+        contacts = trust._contacts(ref) if ref else None
+        resp = {
+            "answer": guard.DEFER_TEXT[category],
+            "source_ministry": ref or [],
+            "citations": [],
+            "confident": False,
+            "evidence_status": "declined",
+            "decline_reason": category,
+            "fallback_contact": contacts or None,
+        }
+        _log(question, session_id, ref or [], resp, int((time.time() - t0) * 1000),
+             client_ip, user_agent)
+        return resp
+
+    # ── Intent gate — greetings, thanks, capability, off-topic ──
     intent = llm.classify_intent(question)
     chatty = llm.chatty_response(intent)
     if chatty is not None:
@@ -125,6 +160,7 @@ def ask(question: str, *, history: list[dict] | None = None,
             "source_ministry": [],
             "citations": [],
             "confident": True,
+            "evidence_status": "declined" if intent == "off_topic" else "answered",
             "fallback_contact": None,
         }
         _log(question, session_id, [], resp, int((time.time() - t0) * 1000),
@@ -139,6 +175,7 @@ def ask(question: str, *, history: list[dict] | None = None,
     if not trust.assess(results):
         answering = detected or _distinct_ministries(results)
         resp = trust.fallback_response(question, answering)
+        resp["evidence_status"] = "unsupported"
     else:
         answer = llm.generate(question, results, history=history)
         # Append web verification if the model hedged
@@ -147,11 +184,14 @@ def ask(question: str, *, history: list[dict] | None = None,
                                                detected or _distinct_ministries(results))
             if verify:
                 answer += verify
+        cites = _citations_from_answer(answer, results)
         resp = {
             "answer": answer,
             "source_ministry": _distinct_ministries(results),
-            "citations": _citations_from_answer(answer, results),
+            "citations": cites,
             "confident": True,
+            "evidence_status": _evidence_status(
+                confident=True, answer=answer, citations=cites),
             "fallback_contact": _contacts_safety_net(answer, detected or _distinct_ministries(results)),
         }
 
@@ -162,13 +202,26 @@ def ask(question: str, *, history: list[dict] | None = None,
 
 def prepare_stream(question: str, history: list[dict] | None = None,
                    ministry_filter: str | None = None) -> dict:
-    """Resolve intent gate + query rewrite + route + retrieval + confidence."""
+    """Resolve guard + intent gate + query rewrite + route + retrieval + confidence."""
+
+    # ── Safety guard first (no LLM) ──
+    unsafe = guard.detect_unsafe(question)
+    if unsafe:
+        category, ref = unsafe
+        contacts = trust._contacts(ref) if ref else None
+        return {"declined": {
+            "answer": guard.DEFER_TEXT[category],
+            "source_ministry": ref or [],
+            "fallback_contact": contacts or None,
+            "decline_reason": category,
+        }}
 
     # ── Intent gate ──
     intent = llm.classify_intent(question)
     chatty = llm.chatty_response(intent)
     if chatty is not None:
         return {"intent": intent, "chatty_response": chatty,
+                "evidence_status": "declined" if intent == "off_topic" else "answered",
                 "confident": True, "history": history or []}
 
     search_q = llm.rewrite_query(question, history) if history else question

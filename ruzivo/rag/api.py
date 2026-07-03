@@ -170,6 +170,25 @@ def ask_stream(req: AskRequest, request: Request) -> StreamingResponse:
 
     def gen():
         try:
+            if "declined" in prep:
+                d = prep["declined"]
+                yield _sse({"type": "delta", "text": d["answer"]})
+                yield _sse({
+                    "type": "done",
+                    "source_ministry": d.get("source_ministry", []),
+                    "citations": [],
+                    "confident": False,
+                    "evidence_status": "declined",
+                    "decline_reason": d.get("decline_reason"),
+                    "fallback_contact": d.get("fallback_contact"),
+                })
+                service._log_stream(
+                    req.question, req.session_id, d.get("source_ministry", []),
+                    {"confident": False, "citations": []}, 0,
+                    client_ip=client_ip, user_agent=user_agent,
+                )
+                return
+
             if "chatty_response" in prep:
                 yield _sse({"type": "delta", "text": prep["chatty_response"]})
                 yield _sse({
@@ -177,6 +196,7 @@ def ask_stream(req: AskRequest, request: Request) -> StreamingResponse:
                     "source_ministry": [],
                     "citations": [],
                     "confident": True,
+                    "evidence_status": prep.get("evidence_status", "answered"),
                     "fallback_contact": None,
                 })
                 return
@@ -192,6 +212,7 @@ def ask_stream(req: AskRequest, request: Request) -> StreamingResponse:
                     "source_ministry": fb["source_ministry"],
                     "citations": [],
                     "confident": False,
+                    "evidence_status": "unsupported",
                     "fallback_contact": fb["fallback_contact"],
                 })
                 return
@@ -221,11 +242,14 @@ def ask_stream(req: AskRequest, request: Request) -> StreamingResponse:
                 # below still gives the user a real escalation path — no empty reply.
 
             citations = service._citations_from_answer(full_answer, results)
+            status = service._evidence_status(
+                confident=True, answer=full_answer, citations=citations)
             yield _sse({
                 "type": "done",
                 "source_ministry": service._distinct_ministries(results),
                 "citations": citations,
                 "confident": True,
+                "evidence_status": status,
                 "fallback_contact": service._contacts_safety_net(
                     full_answer, answering),
             })
