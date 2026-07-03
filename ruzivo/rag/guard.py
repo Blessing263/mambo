@@ -37,10 +37,11 @@ _RULES: list[tuple[str, list[str] | None, re.Pattern]] = [
         r"|what is my liabilit|will i win|represent me (in |at )?(court|my case)"
         r"|advise me (on|whether|if)|do i have a (case|claim|lawsuit))")),
     ("personal_data", None, re.compile(
-        r"(?i)((home |physical |email )?address|phone number|mobile number|id number"
-        r"|national id|contact details|where (does|do) .{3,40} (live|work|stay)"
-        r"|(find|look up|get|give me|what is) .{0,30}(address|phone number|contact)"
-        r"|(locate|track) (a |an |the )?(person|someone|individual))")),
+        r"(?i)((home |physical |email )?address (of|for)|phone number (of|for)"
+        r"|mobile number (of|for)|contact details (of|for)"
+        r"|where (does|do|is) .{3,40} (live|work|stay|located)"
+        r"|(find|look up|get|give me|what is) .{0,30}(address|phone number|mobile number|contact)"
+        r"|(locate|track) (a |an |the )?(person|someone|individual|official))")),
     ("political", None, re.compile(
         r"(?i)(who (should i|i )vote for|which (political )?party (should i )?(vote for|is best)"
         r"|best political party|vote (for|against) .{0,30}party"

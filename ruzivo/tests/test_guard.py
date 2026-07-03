@@ -45,6 +45,12 @@ def test_safe_question_passes_through():
     assert guard.detect_unsafe("How do I replace a lost passport?") is None
 
 
+def test_national_id_question_is_not_personal_data():
+    # "national id" must NOT trigger personal_data — replacing one is a core service.
+    assert guard.detect_unsafe("How do I replace a lost national ID?") is None
+    assert guard.detect_unsafe("Nzira yekushandura national id yakabvaruka?") is None
+
+
 # ---- evidence status ----
 def test_status_answered():
     assert service._evidence_status(confident=True, answer="The fee is USD 10 [1].",
