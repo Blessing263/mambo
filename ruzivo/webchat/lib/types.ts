@@ -5,6 +5,10 @@ export interface Contact {
   email?: string | null;
   address?: string | null;
   hours?: string | null;
+  office_hours?: string | null;
+  service_counter_url?: string | null;
+  last_verified_at?: string | null;
+  human_review_owner?: string | null;
 }
 
 export interface Ministry {

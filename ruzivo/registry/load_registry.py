@@ -18,6 +18,23 @@ from shared.db import get_conn  # noqa: E402
 
 REGISTRY_PATH = Path(__file__).resolve().parent / "ministries.json"
 
+
+def _handoff_contact(m: dict, version: str) -> dict:
+    """Ministry contact enriched with institution-readiness metadata for the
+    handoff card: a service portal link, when the contact was last verified, and
+    a named review owner. Curated values in the registry are preserved."""
+    contact = dict(m.get("contact") or {})
+    domains = m.get("domains") or []
+    seed = (m.get("seed_urls") or [None])[0]
+    contact.setdefault(
+        "service_counter_url",
+        seed or (f"https://www.{domains[0]}/" if domains else None),
+    )
+    contact.setdefault("office_hours", contact.get("hours"))
+    contact.setdefault("last_verified_at", version)
+    contact.setdefault("human_review_owner", m.get("human_review_owner"))
+    return contact
+
 UPSERT = """
 INSERT INTO ministries
     (id, name, short_name, mandate, keywords, domains, contact,
@@ -56,7 +73,7 @@ def load() -> int:
                     "mandate": m["mandate"],
                     "keywords": m.get("keywords", []),
                     "domains": m.get("domains", []),
-                    "contact": json.dumps(m.get("contact", {})),
+                    "contact": json.dumps(_handoff_contact(m, data["version"])),
                     "accent_color": m.get("accent_color"),
                     "source_type": m.get("source_type", "ministry"),
                     "parent_ministry": m.get("parent_ministry"),

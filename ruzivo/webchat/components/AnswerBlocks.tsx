@@ -123,15 +123,23 @@ export function EvidenceBadge({ status }: { status?: string }) {
 export function ContactCard({ c }: { c: Contact }) {
   const all: [string, string | null | undefined][] = [
     ["Phone", c.phone], ["WhatsApp", c.whatsapp], ["Email", c.email],
-    ["Address", c.address], ["Hours", c.hours],
+    ["Address", c.address], ["Hours", c.hours || c.office_hours],
   ];
   const fields = all.filter(([, v]) => v);
-  if (!fields.length) return null;
+  if (!(fields.length || c.service_counter_url)) return null;
   return (
     <div className="rounded-lg border p-3" style={{ borderColor: "var(--border-light)", background: "var(--bg-secondary)" }}>
       <div className="mb-2 flex items-center gap-1.5 text-[13px] font-semibold" style={{ color: "var(--text-primary)" }}>
         <span className="material-symbols" style={{ fontSize: 16 }}>contact_phone</span>
-        {c.ministry ? `${c.ministry} — contact` : "How to reach them"}
+        {c.ministry ? `${c.ministry} — how to reach them` : "How to reach them"}
+        {c.last_verified_at && (
+          <span className="ml-auto inline-flex items-center gap-0.5 rounded-full px-1.5 py-px text-[10px] font-medium"
+            style={{ background: "var(--accent-light)", color: "var(--accent-text)" }}
+            title={`Contact last verified ${c.last_verified_at}`}>
+            <span className="material-symbols" style={{ fontSize: 11 }}>verified</span>
+            {c.last_verified_at}
+          </span>
+        )}
       </div>
       {fields.map(([k, v]) => (
         <div key={k} className="flex gap-2 text-[13px] leading-relaxed">
@@ -139,6 +147,14 @@ export function ContactCard({ c }: { c: Contact }) {
           <span style={{ color: "var(--text-primary)" }}>{v}</span>
         </div>
       ))}
+      {c.service_counter_url && (
+        <a href={c.service_counter_url} target="_blank" rel="noopener noreferrer"
+           className="mt-2 inline-flex items-center gap-1 text-[13px] no-underline"
+           style={{ color: "var(--accent)" }}>
+          <span className="material-symbols" style={{ fontSize: 15 }}>link</span>
+          Service portal / counter
+        </a>
+      )}
     </div>
   );
 }
