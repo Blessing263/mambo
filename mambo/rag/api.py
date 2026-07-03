@@ -25,7 +25,7 @@ from pydantic import BaseModel, Field, field_validator
 from shared.db import healthcheck
 
 from . import llm, service, trust
-from .catalog import ministries
+from .catalog import by_id, ministries
 from .security import (
     _behavior_check,
     _bot_check,
@@ -213,9 +213,28 @@ def ask_stream(req: AskRequest, request: Request) -> StreamingResponse:
                     "citations": [],
                     "confident": False,
                     "evidence_status": "unsupported",
+                    "service_journey": None,
                     "fallback_contact": fb["fallback_contact"],
                 })
                 return
+
+            # Honest, progressive "thinking" steps (real values from prep), shown
+            # before the answer streams. Best-effort: a catalog hiccup must never
+            # block the answer, so the whole block is guarded.
+            try:
+                names = [by_id(m)["short_name"] for m in answering if by_id(m)]
+                if names:
+                    yield _sse({"type": "status", "step": "route",
+                                "text": f"Routing to {', '.join(names)}"})
+                if results:
+                    yield _sse({"type": "status", "step": "search",
+                                "text": f"Searching official documents · {len(results)} relevant"})
+                    top = results[0]
+                    loc = f", p.{top['page']}" if top.get("page") else ""
+                    yield _sse({"type": "status", "step": "read",
+                                "text": f"Reading {top.get('doc_title') or 'the top source'}{loc}"})
+            except Exception:
+                pass
 
             # Stream the answer live, accumulating the FULL text so the final
             # metadata (citations, safety-net contacts, log) matches what the user
@@ -251,6 +270,7 @@ def ask_stream(req: AskRequest, request: Request) -> StreamingResponse:
                 "citations": citations,
                 "confident": True,
                 "evidence_status": status,
+                "service_journey": (prep.get("journey") or {}).get("id"),
                 "fallback_contact": service._contacts_safety_net(
                     full_answer, answering),
             })

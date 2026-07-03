@@ -26,7 +26,16 @@ def test_cite_shape():
     c = trust.cite({"doc_title": "AI Strategy", "page": 12,
                     "source_url": "https://ict.gov.zw/a", "ministry_id": "ict"})
     assert c == {"title": "AI Strategy", "page": 12,
-                 "url": "https://ict.gov.zw/a", "ministry": "ict"}
+                 "url": "https://ict.gov.zw/a", "ministry": "ict",
+                 "snippet": None, "doc_type": "web"}
+
+
+def test_cite_includes_snippet_and_pdf_type():
+    c = trust.cite({"doc_title": "Act", "page": 3,
+                    "source_url": "https://x.gov.zw/act.pdf", "ministry_id": "veritas",
+                    "text": "  " + ("w" * 200) + "  "})
+    assert c["doc_type"] == "pdf"
+    assert c["snippet"] and c["snippet"].endswith("…") and len(c["snippet"]) <= 160
 
 
 def test_top_citations_limits():

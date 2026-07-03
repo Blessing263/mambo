@@ -19,11 +19,16 @@ def assess(results: list[dict]) -> bool:
 
 
 def cite(result: dict) -> dict:
+    text = (result.get("text") or "").strip()
+    snippet = (text[:157] + "…") if len(text) > 160 else (text or None)
+    url = result.get("source_url") or ""
     return {
         "title": result.get("doc_title"),
         "page": result.get("page"),
         "url": result.get("source_url"),
         "ministry": result.get("ministry_id"),
+        "snippet": snippet,
+        "doc_type": "pdf" if url.lower().endswith(".pdf") else "web",
     }
 
 

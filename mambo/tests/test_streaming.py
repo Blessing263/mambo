@@ -46,6 +46,7 @@ def test_full_answer_streamed_with_correct_citations(client, reset_security, get
     done = next(e for e in events if e["type"] == "done")
     assert deltas == "The fee is USD 10 [1]. Bring ID [2]."   # full text streamed
     assert [c["title"] for c in done["citations"]] == ["AI Strategy", "Data Protection"]
+    assert done["service_journey"] is None  # field always present; stub has no journey
 
 
 def test_hedged_answer_attaches_contacts(client, reset_security, get_nonce, monkeypatch):
