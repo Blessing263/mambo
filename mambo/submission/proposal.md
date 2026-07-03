@@ -1,9 +1,9 @@
 ---
 title: "Mambo"
 track: "Development"
-team: "[TEAM NAME]"
-lead: "[LEAD INNOVATOR]"
-members: "[TEAM MEMBER 2], [TEAM MEMBER 3]"
+team: "Team Mambo"
+lead: "Kundai Guvaza"
+members: "Kundai Guvaza, Blessing B. Guvaza"
 date: "3 July 2026"
 project_id: "mambo"
 ---
@@ -15,11 +15,11 @@ project_id: "mambo"
 
 **Project Title:** Mambo — a whole-of-government citizen information assistant
 
-**Team Name:** [TEAM NAME]
+**Team Name:** Team Mambo
 
-**Lead Innovator:** [LEAD INNOVATOR]
+**Lead Innovator:** Kundai Guvaza — Software Engineering student, TelOne Centre for Learning (TCFL)
 
-**Team Members:** [TEAM MEMBER 2], [TEAM MEMBER 3]
+**Team Members:** Kundai Guvaza (Lead), Blessing B. Guvaza
 
 **Date:** 3 July 2026
 :::
