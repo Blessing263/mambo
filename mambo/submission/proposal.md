@@ -22,6 +22,8 @@ project_id: "mambo"
 **Team Members:** Kundai Guvaza (Lead), Blessing B. Guvaza
 
 **Date:** 3 July 2026
+
+**Live demo:** https://mambo.yttrix.tech
 :::
 
 # 1. Problem Definition & Strategic Alignment

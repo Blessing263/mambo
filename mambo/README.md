@@ -4,7 +4,7 @@
 
 Ask a question in everyday words and get a clear answer drawn **only** from official
 government documents — with the source always shown. Live demo:
-**https://ruzivo.yttrix.tech**
+**https://mambo.yttrix.tech**
 
 *Mambo* means "knowledge" in Shona.
 
