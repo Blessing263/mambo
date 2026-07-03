@@ -1,0 +1,32 @@
+component,category,version,license,source,notes
+Ruzivo application code,Code,-,To assign (propose MIT or Apache-2.0 for AI4I handover),Own work,Decide and state the licence explicitly before submission.
+FastAPI,Python package,>=0.115,MIT,https://github.com/tiangolo/fastapi,RAG API.
+uvicorn,Python package,>=0.30,BSD-3-Clause,https://github.com/encode/uvicorn,ASGI server.
+openai (python SDK),Python package,>=1.40,MIT,https://github.com/openai/openai-python,OpenAI-compatible client used to call DeepSeek.
+httpx,Python package,>=0.27,BSD-3-Clause,https://github.com/encode/httpx,HTTP client (ingestion + Tavily).
+beautifulsoup4,Python package,>=4.12,MIT,https://www.crummy.com/software/BeautifulSoup/,HTML parsing.
+lxml,Python package,>=5.0,BSD,https://lxml.de/,Parser backend.
+trafilatura,Python package,>=1.8,Apache-2.0,https://github.com/adbar/trafilatura,Main-content extraction.
+tenacity,Python package,>=8.2,Apache-2.0,https://github.com/jd/tenacity,Retry logic.
+python-slugify,Python package,>=8.2,MIT,https://github.com/un33k/python-slugify,Slug helpers.
+PyMuPDF (fitz),Python package,>=1.24,AGPL-3.0 (or commercial),https://pypi.org/project/PyMuPDF/,AGPL — disclose; commercial licence available if AGPL is incompatible with a deployment.
+pytesseract,Python package,>=0.3.10,Apache-2.0,https://github.com/madmaze/pytesseract,OCR wrapper (system tesseract).
+Pillow,Python package,>=10.0,HPND,https://python-pillow.org/,Image handling for OCR.
+psycopg,Python package,>=3.2,LGPL-2.1+ (binary wheel),https://www.psycopg.org/,Postgres driver.
+pgvector,Python package + PG extension,>=0.3,PostgreSQL License,https://github.com/pgvector/pgvector,Vector storage/search.
+pydantic,Python package,>=2.7,MIT,https://docs.pydantic.dev/,Validation.
+numpy,Python package,>=1.26,BSD-3-Clause,https://numpy.org/,Vector math.
+playwright,Python package,>=1.60,Apache-2.0,https://playwright.dev/,Headless harvesting + tests.
+Next.js,Frontend,14.2.5,MIT,https://nextjs.org/,Webchat framework.
+React,Frontend,18.3.1,MIT,https://react.dev/,UI runtime.
+Tailwind CSS,Frontend,3.4.x,MIT,https://tailwindcss.com/,Styling.
+Playwright (TS),Frontend/test,-,Apache-2.0,https://playwright.dev/,Layout + regression tests.
+Qwen3-Embedding-8B,Model,-,Apache-2.0,https://ollama.com/library/qwen3-embedding,Served via Ollama; 4096-dim embeddings.
+DeepSeek (generation),Model/Service,-,DeepSeek License (model) / API terms (service),https://www.deepseek.com/,Behind a swappable interface; Phase 2 can self-host an open-weight model.
+Ollama,Runtime,-,MIT,https://ollama.com/,Serves the embedding model locally.
+PostgreSQL,Runtime,16,PostgreSQL License,https://www.postgresql.org/,Knowledge store.
+Ministry/agency websites,Data source,-,Public official documents; retrieval/citation (fair use),registry/ministries.json allow-list,See source_register.csv.
+Veritas Zimbabwe,Data source,-,Verify reuse terms (public legislation publisher),https://veritaszim.net,Adjacent trusted legal source.
+ZimLII,Data source,-,Free-access-to-law; verify reuse terms,https://zimlii.org,Case law; very thin coverage currently.
+Material Symbols (icons),Asset,-,Apache-2.0,https://fonts.google.com/icons,UI icons (self-hostable font).
+Inter (font),Asset,-,SIL Open Font License,https://rsms.me/inter/,UI font.

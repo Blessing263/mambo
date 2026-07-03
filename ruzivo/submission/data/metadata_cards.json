@@ -1,0 +1,30 @@
+{
+  "corpus": {
+    "title": "Ruzivo Official-Source Knowledge Corpus",
+    "description": "Citizen-facing retrieval corpus of official Zimbabwean government documents (ministries, statutory bodies, and trusted public legal sources) used to ground cited answers.",
+    "source": "Ministry/agency websites in registry/ministries.json (allow-listed official hosts only).",
+    "timestamp": { "collection_start": "2026-06-01T00:00:00+02:00", "collection_end": "2026-06-29T23:59:59+02:00" },
+    "license": "Public official documents used for retrieval and citation; reuse terms per source (see source_register.csv). Not re-licensed by Ruzivo.",
+    "language_tags": ["en", "sn", "nd"],
+    "geographic_coverage": "Zimbabwe (national).",
+    "temporal_coverage": "Official publications as available on source sites, fetched June 2026; individual document dates vary (see documents.published_date).",
+    "data_type": "text (PDF + HTML, OCR fallback for scanned PDFs)",
+    "data_sensitivity": "public (official documents); user queries are logged separately under a minimisation policy (see data_quality_report.md).",
+    "consent_status": "not_required (public official documents)",
+    "quality_summary": "903 documents / 3059 chunks; 99.97% embedded (1 pending); 100% allow-list discipline; 0 duplicate source URLs; 0 orphan chunks; all titles and raw_paths present. See data_quality_report.md.",
+    "bias_and_coverage_notes": "Coverage is uneven: education (3 chunks) and zimlii (1) are under-represented; zimra is heaviest (857). OCR used on 8 documents only. Local-language source documents are scarce.",
+    "version": "v1.0.0 (registry version 2026-06-07)",
+    "contact_or_steward": "Ruzivo team (see proposal cover page)"
+  },
+  "sources": [
+    { "source_id": "ict", "title": "Ministry of ICT, Postal & Courier Services", "source_type": "ministry", "domains": ["ictministry.gov.zw"], "chunks": 465 },
+    { "source_id": "health", "title": "Ministry of Health and Child Care", "source_type": "ministry", "domains": ["mohcc.gov.zw"], "chunks": 201 },
+    { "source_id": "home_affairs", "title": "Ministry of Home Affairs and Cultural Heritage", "source_type": "ministry", "domains": ["moha.gov.zw"], "chunks": 342 },
+    { "source_id": "finance", "title": "Ministry of Finance, Economic Development & Investment Promotion", "source_type": "ministry", "domains": ["zimtreasury.co.zw"], "chunks": 490 },
+    { "source_id": "education", "title": "Ministry of Primary and Secondary Education", "source_type": "ministry", "domains": ["mopse.gov.zw", "mopse.ac.zw"], "chunks": 3, "note": "thin coverage — site yielded little extractable text; re-crawl needed" },
+    { "source_id": "zimra", "title": "Zimbabwe Revenue Authority", "source_type": "adjacent", "parent_ministry": "finance", "domains": ["zimra.co.zw"], "chunks": 857 },
+    { "source_id": "zimsec", "title": "Zimbabwe School Examinations Council", "source_type": "adjacent", "parent_ministry": "education", "domains": ["zimsec.co.zw"], "chunks": 307 },
+    { "source_id": "veritas", "title": "Veritas Zimbabwe — Acts, Bills & Statutory Instruments", "source_type": "adjacent", "domains": ["veritaszim.net"], "chunks": 393, "note": "independent public legislation publisher; verify reuse terms" },
+    { "source_id": "zimlii", "title": "ZimLII — Zimbabwe Legal Information Institute (Case Law)", "source_type": "adjacent", "domains": ["zimlii.org"], "chunks": 1, "note": "very thin coverage — judgment ingest is a separate pipeline; needs expansion" }
+  ]
+}
