@@ -55,10 +55,28 @@ _MAX_QUESTION_LEN = 2000
 _MAX_HISTORY_TURNS = 20
 
 def _warmup_embeddings() -> None:
-    """Load the embedding model at startup so the first user query isn't cold (~40s)."""
+    """Load the embedding model at startup AND pre-warm the query-embedding cache
+    for the most-asked demo questions (journey prompts + examples), so those answer
+    in ~2-3s instead of waiting ~13s for a fresh Qwen3-8B CPU embed. Cache hits are
+    exact (normalised lower-case), so this covers the journey tiles + example chips."""
+    demo = [
+        "How do I replace a lost national ID?",
+        "How do I apply for a passport?",
+        "How do I get a tax clearance certificate?",
+        "How do I register a birth certificate?",
+        "How do I register a business for tax?",
+        "How do I check exam results or replace a certificate?",
+        "What is the National AI Strategy?",
+        "What taxes do employers pay?",
+    ]
     try:
         from shared.embeddings import embed_query  # noqa: PLC0415
-        embed_query("warmup")
+        embed_query("warmup")  # load the model (~13s cold)
+        for q in demo:  # populate the lru cache for likely demo questions
+            try:
+                embed_query(q)
+            except Exception:
+                pass
     except Exception:
         pass
 
