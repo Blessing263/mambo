@@ -1,0 +1,69 @@
+{
+  "ministries": {},
+  "checks": {
+    "allow_list_discipline": {
+      "ok": true,
+      "off_allow_count": 0
+    },
+    "source_url_uniqueness": {
+      "ok": true,
+      "duplicate_count": 0
+    },
+    "no_orphan_chunks": {
+      "ok": true,
+      "orphan_count": 0
+    },
+    "embedding_completeness": {
+      "total": 3059,
+      "null": 1,
+      "complete_pct": 99.97
+    },
+    "dim_labelled": {
+      "ok": true,
+      "unlabelled_embedded": 0
+    },
+    "titles_present": {
+      "ok": true,
+      "missing": 0
+    },
+    "raw_paths_present": {
+      "ok": true,
+      "missing": 0
+    },
+    "documents_map_to_enabled_ministries": {
+      "ok": true,
+      "off_count": 0
+    }
+  },
+  "violations": {
+    "off_allow_list_sample": [],
+    "duplicate_urls_sample": []
+  },
+  "summary": {
+    "enabled_ministries": [
+      "education",
+      "finance",
+      "health",
+      "home_affairs",
+      "ict",
+      "veritas",
+      "zimlii",
+      "zimra",
+      "zimsec"
+    ],
+    "documents": 903,
+    "chunks": 3059,
+    "ocr_documents": 8
+  },
+  "chunks_by_ministry": {
+    "education": 3,
+    "finance": 490,
+    "health": 201,
+    "home_affairs": 342,
+    "ict": 465,
+    "veritas": 393,
+    "zimlii": 1,
+    "zimra": 857,
+    "zimsec": 307
+  }
+}
