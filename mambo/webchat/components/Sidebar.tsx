@@ -3,6 +3,7 @@
 import type { Ministry } from "@/lib/types";
 import { MINISTRY_ICON, MINISTRY_SUBTITLE } from "@/lib/types";
 import { ThemeToggle } from "./ThemeToggle";
+import { Mark, Wordmark } from "./Brand";
 
 // Static fallback so the sidebar never shows an empty list during the brief
 // window before the /api/ministries call resolves. These are the same 8
@@ -58,18 +59,8 @@ export function Sidebar({
             style={{ borderColor: "var(--border-primary)" }}
           >
             <div className="flex items-center gap-2.5">
-              <span
-                className="grid h-7 w-7 place-items-center rounded-lg text-sm font-bold text-white"
-                style={{ background: "var(--accent)" }}
-              >
-                R
-              </span>
-              <span
-                className="text-[17px] font-semibold tracking-tight"
-                style={{ color: "var(--text-primary)" }}
-              >
-                Mambo<span style={{ color: "var(--gold)" }}>.</span>
-              </span>
+              <Mark size={30} />
+              <Wordmark size={20} />
             </div>
             <button
               onClick={onClose}

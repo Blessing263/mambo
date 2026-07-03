@@ -25,6 +25,7 @@ export async function fetchMinistries(): Promise<Ministry[]> {
 interface StreamHandlers {
   onDelta: (text: string) => void;
   onDone: (meta: DoneMeta) => void;
+  onStatus?: (s: { step?: string; text: string }) => void;
   onError: (err: unknown) => void;
 }
 
@@ -84,6 +85,7 @@ export async function askStream(
         if (!dataLine) continue;
         const payload = JSON.parse(dataLine.slice(5).trim());
         if (payload.type === "delta") handlers.onDelta(payload.text);
+        else if (payload.type === "status") handlers.onStatus?.(payload as { step?: string; text: string });
         else if (payload.type === "done") handlers.onDone(payload as DoneMeta);
       }
     }

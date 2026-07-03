@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Chat } from "@/components/Chat";
 import { Sidebar } from "@/components/Sidebar";
+import { Mark, Wordmark } from "@/components/Brand";
 import { fetchMinistries } from "@/lib/api";
 import type { Ministry } from "@/lib/types";
 
@@ -37,7 +38,7 @@ export default function Home() {
       <main className="main-area flex w-full flex-col" style={{ transition: "margin-left 0.25s cubic-bezier(0.25,0.8,0.25,1)" }}>
         {/* Fixed top bar — only the hamburger (mobile) and new-chat button.
             On desktop the full logo + title live in the pinned sidebar. */}
-        <div
+        <header
           className="top-bar fixed top-0 right-0 z-30 flex shrink-0 items-center justify-between border-b px-3 py-2.5 sm:px-4"
           style={{ borderColor: "var(--border-primary)", background: "var(--bg-primary)", left: 0 }}
         >
@@ -52,12 +53,9 @@ export default function Home() {
             </button>
 
             {/* Mobile-only: logo + title (desktop has them in the pinned sidebar) */}
-            <span
-              className="lg:hidden grid h-7 w-7 place-items-center rounded-lg text-sm font-bold text-white"
-              style={{ background: "var(--accent)" }}
-            >R</span>
-            <span className="lg:hidden text-lg font-semibold tracking-tight" style={{ color: "var(--text-primary)" }}>
-              Mambo<span style={{ color: "var(--gold)" }}>.</span>
+            <span className="lg:hidden flex items-center gap-2">
+              <Mark size={26} />
+              <Wordmark size={18} />
             </span>
 
             {chatStarted && (
@@ -77,7 +75,7 @@ export default function Home() {
               <span className="material-symbols font-ready" style={{ fontSize: 22 }}>add</span>
             </button>
           )}
-        </div>
+        </header>
 
         {/* Full-height area below the fixed header — this scrolls internally.
             pt-[52px] compensates for the fixed bar height. */}

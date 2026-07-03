@@ -42,7 +42,7 @@ export interface DoneMeta {
 
 export type StatusStep = "route" | "search" | "read" | "verify";
 export interface StatusEvent {
-  step?: StatusStep;
+  step?: string;
   text: string;
 }
 
