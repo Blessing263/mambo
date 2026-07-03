@@ -26,6 +26,8 @@ export interface Citation {
   page: number | null;
   url: string;
   ministry: string;
+  snippet?: string | null;
+  doc_type?: "pdf" | "web" | null;
 }
 
 export interface DoneMeta {
@@ -35,6 +37,23 @@ export interface DoneMeta {
   fallback_contact: Contact[] | null;
   evidence_status?: "answered" | "partial" | "unsupported" | "declined";
   decline_reason?: string | null;
+  service_journey?: string | null;
+}
+
+export type StatusStep = "route" | "search" | "read" | "verify";
+export interface StatusEvent {
+  step?: StatusStep;
+  text: string;
+}
+
+export interface ServiceJourney {
+  id: string;
+  title: string;
+  ministry: string;
+  keywords: string[];
+  sections: string[];
+  icon?: string;
+  blurb?: string;
 }
 
 export interface ChatMessage {
@@ -43,6 +62,7 @@ export interface ChatMessage {
   text: string;
   streaming?: boolean;
   meta?: DoneMeta;
+  steps?: StatusEvent[];
   feedback?: 1 | -1 | null;
 }
 
@@ -56,6 +76,7 @@ export const MINISTRY_ICON: Record<string, string> = {
   zimra: "receipt_long",
   zimsec: "assignment",
   veritas: "gavel",
+  zimlii: "balance",
 };
 
 // "Ministry" vs "Agency" — used in the sidebar subtitle row.
@@ -68,4 +89,5 @@ export const MINISTRY_SUBTITLE: Record<string, string> = {
   zimra: "Agency",
   zimsec: "Agency",
   veritas: "Agency",
+  zimlii: "Agency",
 };

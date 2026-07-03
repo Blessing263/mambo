@@ -13,6 +13,7 @@ export function ThemeToggle() {
   function toggle() {
     const next = dark ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", next);
+    try { localStorage.setItem("mambo-theme", next); } catch { /* ignore */ }
     setDark(!dark);
   }
 
