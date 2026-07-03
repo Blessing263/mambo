@@ -8,10 +8,16 @@ from __future__ import annotations
 import json
 import re
 import time
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeout
 
 from shared.db import get_conn
 
 from . import guard, journeys, llm, retrieval, router, trust
+
+# Classify intent in parallel with retrieval so a real question doesn't pay
+# classify latency on top of retrieval latency. Bounded pool; classify (an LLM
+# call, no DB) is the only task submitted here.
+_EXEC = ThreadPoolExecutor(max_workers=4)
 
 _CITE_RE = re.compile(r"\[(\d+)\]")
 K = 6
@@ -218,17 +224,30 @@ def prepare_stream(question: str, history: list[dict] | None = None,
             "decline_reason": category,
         }}
 
-    # ── Intent gate ──
-    intent = llm.classify_intent(question)
-    chatty = llm.chatty_response(intent)
-    if chatty is not None:
-        return {"intent": intent, "chatty_response": chatty,
-                "evidence_status": "declined" if intent == "off_topic" else "answered",
-                "confident": True, "history": history or []}
+    # ── Intent gate, run in parallel with retrieval ──
+    # classify_intent has a regex pre-gate, so obvious greetings/thanks/capability
+    # resolve almost instantly — if so, short-circuit and skip retrieval. Otherwise
+    # the LLM classify runs concurrently with route+retrieve below.
+    classify_fut = _EXEC.submit(llm.classify_intent, question)
+    try:
+        intent = classify_fut.result(timeout=0.15)
+        chatty = llm.chatty_response(intent)
+        if chatty is not None:
+            return {"intent": intent, "chatty_response": chatty,
+                    "evidence_status": "declined" if intent == "off_topic" else "answered",
+                    "confident": True, "history": history or []}
+    except FuturesTimeout:
+        pass  # classify is on the LLM — retrieve in parallel while it finishes
 
     search_q = llm.rewrite_query(question, history) if history else question
     detected = [ministry_filter] if ministry_filter else router.route(search_q)
     results = retrieval.search(search_q, detected or None, k=K)
     confident = trust.assess(results)
+    intent = classify_fut.result()
+    chatty = llm.chatty_response(intent)
+    if chatty is not None:
+        return {"intent": intent, "chatty_response": chatty,
+                "evidence_status": "declined" if intent == "off_topic" else "answered",
+                "confident": True, "history": history or []}
     return {"detected": detected, "results": results, "confident": confident,
             "journey": journeys.match_journey(question), "history": history or []}

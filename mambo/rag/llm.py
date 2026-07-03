@@ -60,14 +60,28 @@ def _messages(question: str, contexts: list[dict], history: list[dict] | None,
     ]
 
 
+# Cheap regex pre-gate: obvious greetings/thanks/capability skip the LLM call
+# entirely (instant reply, no classify latency, no wasted retrieval).
+_QUICK_INTENT: list[tuple[str, re.Pattern]] = [
+    ("greeting", re.compile(r"^\s*(hi|hie|hey+|hello+|good\s+(morning|afternoon|evening|day)|how\s+(are|r)\s+(you|u)|mangwanani|sekalenge|mhoro)\b[\s!.?]*$", re.I)),
+    ("thanks", re.compile(r"^\s*(thanks|thank\s+you|thx|thankx|cheers|appreciated|much\s+appreciated|nice\s+one|ta)\b[\s!.?]*$", re.I)),
+    ("capability", re.compile(r"^\s*(what\s+can\s+you\s+do|who\s+are\s+you|what\s+are\s+you|what\s+do\s+you\s+do|how\s+do\s+you\s+work|are\s+you\s+(a\s+|an\s+)?(bot|ai|robot|human)|what(?:'s|\s+is)\s+your\s+name)\??\s*$", re.I)),
+]
+
+
 def classify_intent(question: str) -> str:
     """Classify user intent BEFORE retrieval. Catch greetings, thanks,
     capability questions, and off-topic messages so RAG is never wasted.
     Returns one of: greeting, thanks, capability, off_topic, question, other.
 
+    Obvious greetings/thanks/capability are caught by a regex pre-gate (no LLM).
     flash is a reasoning model — it spends tokens "thinking" before producing
     visible content, so the budget must be large enough for both reasoning
     AND the output word (typically 100–200 tokens)."""
+    q = (question or "").strip()
+    for intent, rx in _QUICK_INTENT:
+        if rx.match(q):
+            return intent
     resp = _client.chat.completions.create(
         model=settings.deepseek_model,
         messages=[

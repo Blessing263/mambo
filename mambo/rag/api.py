@@ -14,7 +14,9 @@ human-behaviour checks, concurrent stream cap, validated input sizes.
 from __future__ import annotations
 
 import json
+import threading
 import time
+from contextlib import asynccontextmanager
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Request
@@ -52,9 +54,26 @@ IS_PROD = __import__("os").environ.get("RUZIVO_ENV", "").lower() == "production"
 _MAX_QUESTION_LEN = 2000
 _MAX_HISTORY_TURNS = 20
 
+def _warmup_embeddings() -> None:
+    """Load the embedding model at startup so the first user query isn't cold (~40s)."""
+    try:
+        from shared.embeddings import embed_query  # noqa: PLC0415
+        embed_query("warmup")
+    except Exception:
+        pass
+
+
+@asynccontextmanager
+async def lifespan(_app):
+    # Warm the embedding model in the background without delaying startup.
+    threading.Thread(target=_warmup_embeddings, daemon=True).start()
+    yield
+
+
 app = FastAPI(
     title="Mambo RAG API",
     version="0.1.0",
+    lifespan=lifespan,
     docs_url=None if IS_PROD else "/docs",
     redoc_url=None if IS_PROD else "/redoc",
 )
@@ -164,12 +183,14 @@ def ask_stream(req: AskRequest, request: Request) -> StreamingResponse:
         raise HTTPException(status_code=429, detail="Suspicious activity detected. Slow down.")
 
     history = [t.model_dump() for t in req.history]
-    prep = service.prepare_stream(req.question, history, req.ministry_filter)
     client_ip = _client_ip(request)
     user_agent = request.headers.get("user-agent", "")
 
     def gen():
         try:
+            # Immediate feedback while the question is understood + retrieved.
+            yield _sse({"type": "status", "step": "intent", "text": "Understanding your question…"})
+            prep = service.prepare_stream(req.question, history, req.ministry_filter)
             if "declined" in prep:
                 d = prep["declined"]
                 yield _sse({"type": "delta", "text": d["answer"]})

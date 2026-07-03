@@ -27,3 +27,17 @@ def test_question_returns_none():
 
 def test_other_returns_none():
     assert llm.chatty_response("other") is None
+
+
+# regex pre-gate — obvious intents skip the LLM entirely (hermetic, no API call)
+def test_classify_regex_greeting():
+    assert llm.classify_intent("hi") == "greeting"
+    assert llm.classify_intent("Hello there!") == "greeting"
+
+
+def test_classify_regex_thanks():
+    assert llm.classify_intent("thank you") == "thanks"
+
+
+def test_classify_regex_capability():
+    assert llm.classify_intent("What can you do?") == "capability"
