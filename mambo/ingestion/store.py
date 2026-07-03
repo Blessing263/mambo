@@ -99,13 +99,13 @@ def store_document(
                 """
                 INSERT INTO chunks
                     (document_id, ministry_id, chunk_index, text, page, section,
-                     token_count, embedding, content_hash)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
+                     token_count, embedding, content_hash, dim)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
                 """,
                 (
                     document_id, ministry_id, ch["chunk_index"], ch["text"],
                     ch.get("page"), ch.get("section"), len(ch["text"]) // 4,
-                    embedding, content_h,
+                    embedding, content_h, 4096 if embedding is not None else None,
                 ),
             )
         conn.commit()
