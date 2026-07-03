@@ -222,7 +222,8 @@ def ask_stream(req: AskRequest, request: Request) -> StreamingResponse:
             # actually received. The old buffer-then-clear logic left full_answer
             # empty, so citations fell back to top-3 and the contacts net never fired.
             parts: list[str] = []
-            for token in llm.generate_stream(req.question, results, history=history):
+            for token in llm.generate_stream(req.question, results, history=history,
+                                              journey=prep.get("journey")):
                 parts.append(token)
                 yield _sse({"type": "delta", "text": token})
             full_answer = "".join(parts)

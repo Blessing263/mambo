@@ -47,9 +47,14 @@ def _history_messages(history: list[dict] | None) -> list[dict]:
     return out
 
 
-def _messages(question: str, contexts: list[dict], history: list[dict] | None) -> list[dict]:
+def _messages(question: str, contexts: list[dict], history: list[dict] | None,
+              journey: dict | None = None) -> list[dict]:
+    system = SYSTEM_PROMPT
+    if journey:
+        from .prompt import journey_directive  # noqa: PLC0415
+        system = system + journey_directive(journey)
     return [
-        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": system},
         *_history_messages(history),
         {"role": "user", "content": build_user_prompt(question, contexts)},
     ]
@@ -118,12 +123,13 @@ def generate(
     contexts: list[dict],
     *,
     history: list[dict] | None = None,
+    journey: dict | None = None,
     temperature: float = 0.2,
     max_tokens: int = 900,
 ) -> str:
     resp = _client.chat.completions.create(
         model=settings.deepseek_model,
-        messages=_messages(question, contexts, history),
+        messages=_messages(question, contexts, history, journey),
         temperature=temperature,
         max_tokens=max_tokens,
     )
@@ -135,12 +141,13 @@ def generate_stream(
     contexts: list[dict],
     *,
     history: list[dict] | None = None,
+    journey: dict | None = None,
     temperature: float = 0.2,
     max_tokens: int = 900,
 ) -> Iterator[str]:
     stream = _client.chat.completions.create(
         model=settings.deepseek_model,
-        messages=_messages(question, contexts, history),
+        messages=_messages(question, contexts, history, journey),
         temperature=temperature,
         max_tokens=max_tokens,
         stream=True,

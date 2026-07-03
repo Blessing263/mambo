@@ -1,0 +1,48 @@
+{
+  "version": "2026-06-29",
+  "note": "Ruzivo Service Journeys — high-demand citizen tasks answered as structured whole-problem cards. Section CONTENT stays grounded in official documents via RAG; the journey only shapes the answer's structure. Matched via whole-word keywords. Inspired by GOV.UK service design (start with the user need; solve the whole problem).",
+  "journeys": [
+    {
+      "id": "lost_national_id",
+      "title": "Replacing a lost national ID",
+      "ministry": "home_affairs",
+      "keywords": ["lost id", "lost national id", "replace id", "replace national id", "id card lost", "replacement id", "national id replacement", "lost identity card"],
+      "sections": ["Eligibility", "What to bring", "Steps", "Fees", "Where to apply", "Expected timeline"]
+    },
+    {
+      "id": "passport",
+      "title": "Applying for a passport",
+      "ministry": "home_affairs",
+      "keywords": ["passport", "e-passport", "epassport", "apply for a passport", "renew passport", "passport application", "passport requirements", "new passport"],
+      "sections": ["Eligibility", "What to bring", "Steps", "Fees", "Where to apply", "Expected timeline"]
+    },
+    {
+      "id": "tax_clearance",
+      "title": "Getting a tax clearance certificate",
+      "ministry": "zimra",
+      "keywords": ["tax clearance", "tax clearance certificate", "clearance certificate", "good standing tax", "zimra clearance"],
+      "sections": ["Eligibility", "What you need", "Steps", "Fees", "Where to apply", "Expected timeline"]
+    },
+    {
+      "id": "birth_certificate",
+      "title": "Registering a birth certificate",
+      "ministry": "home_affairs",
+      "keywords": ["birth certificate", "register a birth", "newborn birth certificate", "birth registration", "late birth registration"],
+      "sections": ["Eligibility", "What to bring", "Steps", "Fees", "Where to apply", "Expected timeline"]
+    },
+    {
+      "id": "business_tax_registration",
+      "title": "Registering a business for tax",
+      "ministry": "zimra",
+      "keywords": ["register a business", "business registration tax", "register company tax", "taxpayer registration", "new business tax"],
+      "sections": ["Eligibility", "What you need", "Steps", "Fees", "Where to register", "Expected timeline"]
+    },
+    {
+      "id": "exam_results_certificate",
+      "title": "Exam results and certificate replacement (ZIMSEC)",
+      "ministry": "zimsec",
+      "keywords": ["exam results", "examination results", "zimsec results", "replace certificate", "lost zimsec certificate", "remark exam", "grade 7 results", "o level results", "a level results"],
+      "sections": ["Eligibility", "What to bring", "Steps", "Fees", "Where to apply", "Expected timeline"]
+    }
+  ]
+}

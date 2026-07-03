@@ -138,3 +138,23 @@ def build_user_prompt(question: str, contexts: list[dict]) -> str:
         "Cite with [n]. If the sources don't answer it, say so honestly."
     )
     return "\n".join(lines)
+
+
+def journey_directive(journey: dict) -> str:
+    """Extra system instructions that shape a grounded RAG answer into a structured
+    service card when a journey matches. Section content stays grounded + cited;
+    uncovered sections are stated honestly rather than guessed."""
+    sections = journey.get("sections") or [
+        "Eligibility", "What to bring", "Steps", "Fees", "Where to apply",
+        "Expected timeline",
+    ]
+    sec = "\n".join(f"- **{s}**" for s in sections)
+    return (
+        f"\n\n**Service card — {journey['title']}**\n"
+        "Shape your answer under these bold headings, in this order. For EACH "
+        "heading, answer ONLY from the SOURCES with [n] citations; if the sources "
+        "do not cover a heading, write exactly "
+        "\"Not specified in the official documents I hold\" for it — do not guess:\n"
+        f"{sec}\n"
+        "Keep the card concise and scannable. Do not use markdown headings (#)."
+    )

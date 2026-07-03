@@ -11,7 +11,7 @@ import time
 
 from shared.db import get_conn
 
-from . import guard, llm, retrieval, router, trust
+from . import guard, journeys, llm, retrieval, router, trust
 
 _CITE_RE = re.compile(r"\[(\d+)\]")
 K = 6
@@ -171,13 +171,14 @@ def ask(question: str, *, history: list[dict] | None = None,
     search_q = llm.rewrite_query(question, history) if history else question
     detected = [ministry_filter] if ministry_filter else router.route(search_q)
     results = retrieval.search(search_q, detected or None, k=K)
+    journey = journeys.match_journey(question)
 
     if not trust.assess(results):
         answering = detected or _distinct_ministries(results)
         resp = trust.fallback_response(question, answering)
         resp["evidence_status"] = "unsupported"
     else:
-        answer = llm.generate(question, results, history=history)
+        answer = llm.generate(question, results, history=history, journey=journey)
         # Append web verification if the model hedged
         if _answer_is_hedged(answer):
             verify = _web_verify_if_uncertain(answer, question,
@@ -192,6 +193,7 @@ def ask(question: str, *, history: list[dict] | None = None,
             "confident": True,
             "evidence_status": _evidence_status(
                 confident=True, answer=answer, citations=cites),
+            "service_journey": journey["id"] if journey else None,
             "fallback_contact": _contacts_safety_net(answer, detected or _distinct_ministries(results)),
         }
 
@@ -229,4 +231,4 @@ def prepare_stream(question: str, history: list[dict] | None = None,
     results = retrieval.search(search_q, detected or None, k=K)
     confident = trust.assess(results)
     return {"detected": detected, "results": results, "confident": confident,
-            "history": history or []}
+            "journey": journeys.match_journey(question), "history": history or []}
