@@ -18,7 +18,7 @@ from pathlib import Path
 from .allowlist import ministry_for_url
 from .chunk import chunk_pages
 from .discover import discover
-from .extract import extract_html, extract_pdf
+from .extract import extract_docx, extract_html, extract_pdf
 from .fetch import FetchBlocked, fetch
 from .store import already_ingested, sha256, store_document
 
@@ -65,10 +65,15 @@ def ingest_content(
     if already_ingested(final_url, content_hash):
         return ("skipped", final_url, 0)
 
-    is_pdf = "pdf" in content_type or final_url.lower().endswith(".pdf")
+    lower_url = final_url.lower()
+    is_pdf = "pdf" in content_type or lower_url.endswith(".pdf")
+    is_docx = "wordprocessingml.document" in content_type or lower_url.endswith(".docx")
     if is_pdf:
         extracted = extract_pdf(content)
         doc_type, ext = "pdf", "pdf"
+    elif is_docx:
+        extracted = extract_docx(content)
+        doc_type, ext = "docx", "docx"
     else:
         extracted = extract_html(content, final_url)
         doc_type, ext = "html", "html"

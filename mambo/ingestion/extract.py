@@ -68,3 +68,32 @@ def extract_html(content: bytes, url: str) -> dict:
         "page_count": None,
         "ocr_used": False,
     }
+
+
+def extract_docx(content: bytes) -> dict:
+    """Extract text from a .docx (paragraphs + tables) via python-docx."""
+    import io
+    from docx import Document  # noqa: PLC0415
+    doc = Document(io.BytesIO(content))
+    parts: list[str] = []
+    for p in doc.paragraphs:
+        t = (p.text or "").strip()
+        if t:
+            parts.append(t)
+    for table in doc.tables:
+        for row in table.rows:
+            cells = [c.text.strip() for c in row.cells if c.text.strip()]
+            if cells:
+                parts.append(" | ".join(cells))
+    text = "\n".join(parts)
+    title = None
+    try:
+        title = ((doc.core_properties.title or "")).strip() or None
+    except Exception:
+        pass
+    return {
+        "pages": [(None, text)],
+        "title": title,
+        "page_count": None,
+        "ocr_used": False,
+    }

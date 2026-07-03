@@ -14,13 +14,13 @@
       "orphan_count": 0
     },
     "embedding_completeness": {
-      "total": 2899,
+      "total": 2901,
       "null": 1,
       "complete_pct": 99.97
     },
     "dim_labelled": {
-      "ok": true,
-      "unlabelled_embedded": 0
+      "ok": false,
+      "unlabelled_embedded": 2
     },
     "titles_present": {
       "ok": true,
@@ -51,8 +51,8 @@
       "zimra",
       "zimsec"
     ],
-    "documents": 889,
-    "chunks": 2899,
+    "documents": 890,
+    "chunks": 2901,
     "ocr_documents": 8
   },
   "chunks_by_ministry": {
@@ -64,6 +64,6 @@
     "veritas": 393,
     "zimlii": 1,
     "zimra": 857,
-    "zimsec": 307
+    "zimsec": 309
   }
 }
