@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ruzivo — Mobile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,600;0,700;1,600&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --zw-green:#1F8A4C; --zw-gold:#E8B530; --zw-red:#C0392B; --zw-black:#0B0F0C;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      font-family: "Hanken Grotesk", system-ui, sans-serif;
+      background:
+        radial-gradient(1100px 700px at 50% -10%, rgba(31,138,76,0.30), transparent 60%),
+        radial-gradient(800px 500px at 90% 110%, rgba(232,181,48,0.10), transparent 60%),
+        #070B08;
+      color: #ECF2E9; min-height: 100%;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 40px 20px 56px; gap: 26px;
+    }
+    .cap { text-align: center; max-width: 460px; }
+    .kicker {
+      display: inline-flex; align-items: center; gap: 10px; font-size: 11.5px; font-weight: 700;
+      letter-spacing: 0.18em; text-transform: uppercase; color: #6B776A; margin-bottom: 14px;
+    }
+    .ribbon {
+      display: inline-block; width: 28px; height: 3px; border-radius: 9px;
+      background: linear-gradient(90deg,var(--zw-green) 0 14.28%,var(--zw-gold) 14.28% 28.56%,var(--zw-red) 28.56% 42.84%,var(--zw-black) 42.84% 57.16%,var(--zw-red) 57.16% 71.44%,var(--zw-gold) 71.44% 85.72%,var(--zw-green) 85.72% 100%);
+    }
+    h1 { font-family: "Spectral", serif; font-weight: 700; font-size: 30px; letter-spacing: -0.02em; margin: 0 0 10px; }
+    h1 em { color: #38C075; font-style: italic; }
+    p { color: #A4B0A2; font-size: 14.5px; line-height: 1.6; margin: 0 auto; max-width: 400px; }
+    .stage { display: flex; gap: 40px; align-items: center; flex-wrap: wrap; justify-content: center; }
+    .device-shell { position: relative; }
+    .glow { position: absolute; inset: -30px; border-radius: 80px; background: radial-gradient(circle, rgba(56,192,117,0.22), transparent 70%); filter: blur(20px); z-index: 0; }
+    .note { display: flex; flex-direction: column; gap: 14px; max-width: 260px; }
+    .note-item { display: flex; gap: 11px; align-items: flex-start; }
+    .note-dot { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; flex-shrink: 0;
+      background: rgba(56,192,117,0.14); color: #38C075; font-size: 14px; font-weight: 700; font-family: "Spectral", serif; }
+    .note-t { font-size: 14px; font-weight: 700; color: #ECF2E9; }
+    .note-s { font-size: 12.5px; color: #6B776A; line-height: 1.45; margin-top: 2px; }
+    .links { font-size: 13px; color: #6B776A; }
+    .links a { color: #38C075; text-decoration: none; font-weight: 600; }
+    @media (max-width: 760px) { .note { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="cap">
+    <div class="kicker"><span class="ribbon"></span>Government of Zimbabwe<span class="ribbon"></span></div>
+    <h1>Built for the phone <em>first.</em></h1>
+    <p>Most citizens reach government on a mobile device. Ruzivo is mobile-first, streaming and low-bandwidth — the same national service in your pocket.</p>
+  </div>
+
+  <div class="stage">
+    <div class="device-shell">
+      <div class="glow"></div>
+      <div id="phone" style="position:relative;z-index:1;"></div>
+    </div>
+
+    <div class="note">
+      <div class="note-item"><div class="note-dot">1</div><div><div class="note-t">Plain-language Q&amp;A</div><div class="note-s">Ask in everyday words; answers stream in live.</div></div></div>
+      <div class="note-item"><div class="note-dot">2</div><div><div class="note-t">A source on every reply</div><div class="note-s">Clickable citation cards — never an unverified answer.</div></div></div>
+      <div class="note-item"><div class="note-dot">3</div><div><div class="note-t">Find the right office</div><div class="note-s">Describe a problem; get routed to the exact ministry.</div></div></div>
+      <div class="links" style="margin-top:6px;">Desktop view → <a href="index.html">open the full app</a></div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script type="text/babel" src="ios-frame.jsx"></script>
+  <script type="text/babel">
+    function Phone() {
+      return (
+        <IOSDevice width={392} height={812} dark>
+          <div style={{ height: "100%", paddingTop: 46 }}>
+            <iframe src="index.html" title="Ruzivo mobile"
+              style={{ width: "100%", height: "100%", border: "none", display: "block", background: "#080C09" }} />
+          </div>
+        </IOSDevice>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById("phone")).render(<Phone />);
+  </script>
+</body>
+</html>

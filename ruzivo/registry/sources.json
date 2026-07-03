@@ -1,0 +1,84 @@
+{
+  "note": "Adjacent official bodies — public authorities and trusted legal sources. Same allow-list discipline, same provenance, same citation standard. These are NOT ministries but are official government/statutory sources.",
+  "sources": [
+    {
+      "id": "zimra",
+      "name": "Zimbabwe Revenue Authority (ZIMRA)",
+      "short_name": "ZIMRA",
+      "mandate": "Revenue collection, tax administration, customs and excise, trade facilitation.",
+      "keywords": ["tax", "PAYE", "VAT", "customs", "duty", "import", "export", "income tax", "corporate tax", "taxable", "withholding tax", "presumptive tax", "capital gains tax", "tax return", "tax clearance", "TARMS", "fiscalisation", "excise"],
+      "domains": ["zimra.co.zw", "www.zimra.co.zw"],
+      "seed_urls": ["https://www.zimra.co.zw/"],
+      "doc_pages": ["https://www.zimra.co.zw/downloads", "https://www.zimra.co.zw/public-notices", "https://www.zimra.co.zw/frequently-asked-questions"],
+      "contact": {
+        "phone": "+263 242 790731-9",
+        "email": "pr@zimra.co.zw",
+        "address": "ZIMRA House, Cnr Leopold Takawira Street & Herbert Chitepo Avenue, Harare"
+      },
+      "accent_color": "#D4A017",
+      "sort_order": 6,
+      "enabled": true,
+      "parent_ministry": "finance"
+    },
+    {
+      "id": "zimsec",
+      "name": "Zimbabwe School Examinations Council (ZIMSEC)",
+      "short_name": "ZIMSEC",
+      "mandate": "Administers national examinations at Grade 7, O-Level and A-Level; sets syllabi; issues certificates.",
+      "keywords": ["exam", "examination", "ZIMSEC", "Grade 7", "O Level", "A Level", "syllabus", "timetable", "registration", "certificate", "pass rate", "special needs", "remark", "results", "exam centre", "chief examiner"],
+      "domains": ["zimsec.co.zw", "www5.zimsec.co.zw"],
+      "seed_urls": ["https://www5.zimsec.co.zw/"],
+      "doc_pages": ["https://www5.zimsec.co.zw/exam-regulations/", "https://www5.zimsec.co.zw/examinations-administration/"],
+      "contact": {
+        "phone": "+263 242 304 119",
+        "whatsapp": "0712 737 759",
+        "address": "Upper East Road, Mount Pleasant, Harare"
+      },
+      "accent_color": "#6C3483",
+      "sort_order": 7,
+      "enabled": true,
+      "parent_ministry": "education"
+    },
+    {
+      "id": "veritas",
+      "name": "Veritas Zimbabwe — Acts, Bills & Statutory Instruments",
+      "short_name": "Veritas (Law)",
+      "mandate": "Independent publisher of Zimbabwean legislation: Acts of Parliament, Statutory Instruments, Bills, General Notices, and the Constitution. Provides public access to the law.",
+      "keywords": ["act", "statutory instrument", "SI", "bill", "law", "legislation", "constitution", "chapter", "gazette", "general notice", "amendment", "regulations", "parliament", "legal", "proclamation"],
+      "domains": ["veritaszim.net", "www.veritaszim.net"],
+      "seed_urls": ["https://www.veritaszim.net/", "https://veritaszim.net/a-z-list-of-acts", "https://veritaszim.net/statutoryinst"],
+      "doc_pages": [],
+      "contact": {
+        "url": "https://veritaszim.net"
+      },
+      "accent_color": "#8B4513",
+      "sort_order": 8,
+      "enabled": true
+    },
+    {
+      "id": "zimlii",
+      "name": "ZimLII — Zimbabwe Legal Information Institute (Case Law)",
+      "short_name": "ZimLII (Case Law)",
+      "mandate": "Free, public access to Zimbabwe case law and judgments from the Supreme Court, High Court, Constitutional Court, Labour Court, and Administrative Court. Part of the AfricanLII / Laws.Africa free-access-to-law network.",
+      "keywords": ["judgment", "case law", "case", "precedent", "ruling", "court", "supreme court", "high court", "constitutional court", "labour court", "appeal", "applicant", "respondent", "criminal", "civil", "ratio", "obiter", "citation", "ZLR", "ZWHHC", "ZWSC", "judge", "applicant", "defendant", "plaintiff", "nullity", "rescission", "review", "condonation", "unlawful"],
+      "domains": ["zimlii.org", "www.zimlii.org"],
+      "seed_urls": [
+        "https://zimlii.org/judgments/ZWSC/",
+        "https://zimlii.org/judgments/ZWHHC/",
+        "https://zimlii.org/judgments/ZWBHC/",
+        "https://zimlii.org/judgments/ZWCHHC/",
+        "https://zimlii.org/judgments/ZWMTHC/",
+        "https://zimlii.org/judgments/ZWMSVHC/",
+        "https://zimlii.org/judgments/ZWCC/",
+        "https://zimlii.org/judgments/ZWLC/"
+      ],
+      "doc_pages": [],
+      "contact": {
+        "url": "https://zimlii.org/about/#contact"
+      },
+      "accent_color": "#1B5E20",
+      "sort_order": 9,
+      "enabled": true
+    }
+  ]
+}

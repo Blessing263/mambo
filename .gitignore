@@ -1,0 +1,14 @@
+# Provided challenge materials (POTRAZ reference docs + datasets) — not Ruzivo work
+/ai4i_docs/
+/FB_IMG_*.jpg
+
+# Internal planning / candid working analysis (not for submission)
+/RUZIVO_AI4I_GAP_ANALYSIS.md
+
+# Local tool settings
+/.claude/
+
+# OS / editor cruft
+.DS_Store
+*.swp
+*.tmp

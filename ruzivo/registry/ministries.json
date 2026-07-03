@@ -1,0 +1,182 @@
+{
+  "version": "2026-06-07",
+  "note": "Ruzivo Ministry Registry — the source of truth and the scrape allow-list. 'domains' is an explicit set of exact official hosts (NOT a wildcard); the crawler may only fetch from these hosts. Verified against each ministry's official site, June 2026.",
+  "ministries": [
+    {
+      "id": "ict",
+      "name": "Ministry of Information Communication Technology, Postal & Courier Services",
+      "short_name": "ICT",
+      "mandate": "Develops policies and strategies for ICT, telecommunications, postal and courier services; builds an enabling environment for a knowledge-based society; spearheads ICT regulatory frameworks; promotes ICT literacy; and oversees ICT parastatals. Home of the National ICT Policy, National Broadband Plan, Cyber & Data Protection framework, and the National AI Strategy.",
+      "keywords": ["internet", "broadband", "telecommunications", "mobile network", "data protection", "cyber security", "cybercrime", "POTRAZ", "postal", "courier", "e-government", "digital economy", "artificial intelligence", "ai strategy", "ict in schools", "community information centres", "spectrum", "fibre", "online safety", "privacy"],
+      "domains": ["ictministry.gov.zw", "www.ictministry.gov.zw"],
+      "seed_urls": ["https://www.ictministry.gov.zw/"],
+      "doc_pages": [],
+      "contact": {
+        "phone": "+263 242 707347",
+        "whatsapp": null,
+        "email": "postmaster@ictministry.gov.zw",
+        "address": "76 Samora Machel Avenue, Bank Chambers Building, Harare",
+        "hours": "Mon–Fri 08:00–16:30"
+      },
+      "accent_color": "#1F8A4C",
+      "sort_order": 1,
+      "enabled": true
+    },
+    {
+      "id": "health",
+      "name": "Ministry of Health and Child Care",
+      "short_name": "Health",
+      "mandate": "Provides and regulates health services across Zimbabwe: hospitals and clinics, medicines, disease prevention and control, maternal and child health, immunisation, and public health policy. Oversees the national health workforce and health information.",
+      "keywords": ["hospital", "clinic", "medicine", "drugs", "nurse", "doctor", "vaccination", "immunisation", "disease", "maternal health", "child health", "HIV", "malaria", "tuberculosis", "medical aid", "ambulance", "mental health", "pharmacy", "public health", "outbreak", "nutrition"],
+      "domains": ["mohcc.gov.zw", "www.mohcc.gov.zw"],
+      "seed_urls": ["https://www.mohcc.gov.zw/"],
+      "doc_pages": [],
+      "contact": {
+        "phone": "+263 242 798537-60",
+        "whatsapp": null,
+        "email": "pr@mohcc.gov.zw",
+        "address": "Kaguvi Building, 4th Floor, Central Avenue, Harare",
+        "hours": "Mon–Fri 08:00–16:30"
+      },
+      "accent_color": "#C0392B",
+      "sort_order": 2,
+      "enabled": true
+    },
+    {
+      "id": "home_affairs",
+      "name": "Ministry of Home Affairs and Cultural Heritage",
+      "short_name": "Home Affairs",
+      "mandate": "Maintains public order and security; manages migration and borders; provides civil registration and secure identity documents (national IDs, passports, birth/death/marriage certificates); regulates gaming and entertainment; and preserves national heritage and archives. Oversees the ZRP, Immigration, Central Registry and National Archives.",
+      "keywords": ["passport", "national id", "birth certificate", "death certificate", "marriage certificate", "citizenship", "immigration", "visa", "border", "police", "ZRP", "registrar", "civil registration", "gaming", "liquor licence", "national archives", "deportation", "residence permit", "lost id"],
+      "domains": ["moha.gov.zw", "www.moha.gov.zw"],
+      "seed_urls": ["https://www.moha.gov.zw/en/"],
+      "doc_pages": [],
+      "contact": {
+        "phone": "+263 242 703641-4",
+        "whatsapp": null,
+        "email": "thesecretary@moha.gov.zw",
+        "address": "11th Floor, Mukwati Building, Cnr 4th Street & Selous Avenue, Harare",
+        "hours": "Mon–Fri 08:00–16:30"
+      },
+      "accent_color": "#2C3E70",
+      "sort_order": 3,
+      "enabled": true
+    },
+    {
+      "id": "finance",
+      "name": "Ministry of Finance, Economic Development and Investment Promotion",
+      "short_name": "Finance",
+      "mandate": "Manages public finances and the national economy: formulates the National Budget, fiscal and tax policy; collects revenue through ZIMRA; coordinates economic development plans; mobilises domestic and international financing; and promotes investment and ease of doing business. Oversees the Reserve Bank, ZIMRA and the Mutapa Investment Fund.",
+      "keywords": ["tax", "ZIMRA", "VAT", "budget", "customs", "duty", "revenue", "investment", "business registration", "public finance", "national debt", "tariffs", "economic policy", "treasury", "bonds", "PAYE", "income tax", "ease of doing business", "fiscal policy"],
+      "domains": ["zimtreasury.co.zw", "www.zimtreasury.co.zw"],
+      "seed_urls": ["https://zimtreasury.co.zw/"],
+      "doc_pages": [
+        "https://zimtreasury.co.zw/wp-content/uploads/2025/11/The-2026-National-Budget-Speech-27-11-25.pdf",
+        "https://zimtreasury.co.zw/wp-content/uploads/2025/11/Public-Debt-Report-End-Sep2025.Zimtreasury.pdf",
+        "https://zimtreasury.co.zw/wp-content/uploads/2026/03/Approved-2026-Estimates-of-Expenditure.pdf",
+        "https://zimtreasury.co.zw/wp-content/uploads/2024/11/2025-INFRASTRUCTURE-Development-Programme.pdf"
+      ],
+      "contact": {
+        "phone": "+263 8688003449-53",
+        "whatsapp": "+263 719 567 051",
+        "email": "communications@zimtreasury.co.zw",
+        "address": "3rd Floor, Block B, Mgandane Dlodlo Building (New Government Complex), Cnr Central Avenue & Simon V. Muzenda Street, Harare",
+        "hours": "Mon–Fri 08:00–16:30"
+      },
+      "accent_color": "#B8860B",
+      "sort_order": 4,
+      "enabled": true
+    },
+    {
+      "id": "education",
+      "name": "Ministry of Primary and Secondary Education",
+      "short_name": "Education",
+      "mandate": "Administers primary and secondary schooling: education policy, curriculum, pedagogy and assessment; Early Childhood Development (ECD); the running of all schools; and life-long and continuing education, sport, arts and culture.",
+      "keywords": ["school", "ECD", "primary school", "secondary school", "teacher", "curriculum", "exams", "ZIMSEC", "school fees", "enrollment", "syllabus", "learners", "education policy", "scholarship", "BEAM", "school registration", "pass mark", "textbooks"],
+      "domains": ["mopse.gov.zw", "www.mopse.gov.zw", "mopse.ac.zw"],
+      "seed_urls": ["https://mopse.ac.zw/"],
+      "doc_pages": [],
+      "contact": {
+        "phone": "+263 242 799914",
+        "whatsapp": null,
+        "email": "admin@mopse.gov.zw",
+        "address": "Ambassador House, Union Avenue (Kwame Nkrumah Avenue), Harare",
+        "hours": "Mon–Fri 08:00–16:30"
+      },
+      "accent_color": "#2E86C1",
+      "sort_order": 5,
+      "enabled": true
+    },
+    {
+      "id": "zimra",
+      "name": "Zimbabwe Revenue Authority (ZIMRA)",
+      "short_name": "ZIMRA",
+      "source_type": "adjacent",
+      "parent_ministry": "finance",
+      "mandate": "Revenue collection, tax administration, customs and excise, trade facilitation.",
+      "keywords": ["tax", "PAYE", "VAT", "customs", "duty", "import", "export", "income tax", "corporate tax", "taxable", "withholding tax", "presumptive tax", "capital gains tax", "tax return", "tax clearance", "TARMS", "fiscalisation", "excise"],
+      "domains": ["zimra.co.zw", "www.zimra.co.zw"],
+      "seed_urls": ["https://www.zimra.co.zw/"],
+      "doc_pages": ["https://www.zimra.co.zw/downloads", "https://www.zimra.co.zw/public-notices"],
+      "contact": { "phone": "+263 242 790731-9", "email": "pr@zimra.co.zw", "address": "ZIMRA House, Cnr Leopold Takawira St & Herbert Chitepo Ave, Harare" },
+      "accent_color": "#D4A017",
+      "sort_order": 6,
+      "enabled": true
+    },
+    {
+      "id": "zimsec",
+      "name": "Zimbabwe School Examinations Council (ZIMSEC)",
+      "short_name": "ZIMSEC",
+      "source_type": "adjacent",
+      "parent_ministry": "education",
+      "mandate": "Administers national examinations at Grade 7, O-Level and A-Level; sets syllabi; issues certificates.",
+      "keywords": ["exam", "examination", "ZIMSEC", "Grade 7", "O Level", "A Level", "syllabus", "timetable", "registration", "certificate", "pass rate", "special needs", "remark", "results", "exam centre", "chief examiner"],
+      "domains": ["zimsec.co.zw", "www5.zimsec.co.zw"],
+      "seed_urls": ["https://www5.zimsec.co.zw/"],
+      "doc_pages": ["https://www5.zimsec.co.zw/exam-regulations/", "https://www5.zimsec.co.zw/examinations-administration/"],
+      "contact": { "phone": "+263 242 304 119", "whatsapp": "0712 737 759", "address": "Upper East Road, Mount Pleasant, Harare" },
+      "accent_color": "#6C3483",
+      "sort_order": 7,
+      "enabled": true
+    },
+    {
+      "id": "veritas",
+      "name": "Veritas Zimbabwe — Acts, Bills & Statutory Instruments",
+      "short_name": "Veritas (Law)",
+      "source_type": "adjacent",
+      "mandate": "Independent publisher of Zimbabwean legislation: Acts of Parliament, Statutory Instruments, Bills, General Notices, and the Constitution. Provides public access to the law.",
+      "keywords": ["act", "statutory instrument", "SI", "bill", "law", "legislation", "constitution", "chapter", "gazette", "general notice", "amendment", "regulations", "parliament", "legal", "proclamation"],
+      "domains": ["veritaszim.net", "www.veritaszim.net"],
+      "seed_urls": ["https://www.veritaszim.net/", "https://veritaszim.net/a-z-list-of-acts", "https://veritaszim.net/statutoryinst"],
+      "doc_pages": [],
+      "contact": { "url": "https://veritaszim.net" },
+      "accent_color": "#8B4513",
+      "sort_order": 8,
+      "enabled": true
+    },
+    {
+      "id": "zimlii",
+      "name": "ZimLII — Zimbabwe Legal Information Institute (Case Law)",
+      "short_name": "ZimLII (Case Law)",
+      "source_type": "adjacent",
+      "mandate": "Free, public access to Zimbabwe case law and judgments from the Supreme Court, High Court, Constitutional Court, Labour Court, and Administrative Court. Part of the AfricanLII / Laws.Africa free-access-to-law network.",
+      "keywords": ["judgment", "case law", "case", "precedent", "ruling", "court", "supreme court", "high court", "constitutional court", "labour court", "appeal", "applicant", "respondent", "criminal", "civil", "ratio", "obiter", "citation", "ZLR", "ZWHHC", "ZWSC", "judge", "applicant", "defendant", "plaintiff", "nullity", "rescission", "review", "condonation", "unlawful"],
+      "domains": ["zimlii.org", "www.zimlii.org"],
+      "seed_urls": [
+        "https://zimlii.org/judgments/ZWSC/",
+        "https://zimlii.org/judgments/ZWHHC/",
+        "https://zimlii.org/judgments/ZWBHC/",
+        "https://zimlii.org/judgments/ZWCHHC/",
+        "https://zimlii.org/judgments/ZWMTHC/",
+        "https://zimlii.org/judgments/ZWMSVHC/",
+        "https://zimlii.org/judgments/ZWCC/",
+        "https://zimlii.org/judgments/ZWLC/"
+      ],
+      "doc_pages": [],
+      "contact": { "url": "https://zimlii.org/about/#contact" },
+      "accent_color": "#1B5E20",
+      "sort_order": 9,
+      "enabled": true
+    }
+  ]
+}
