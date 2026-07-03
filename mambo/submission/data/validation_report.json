@@ -14,13 +14,13 @@
       "orphan_count": 0
     },
     "embedding_completeness": {
-      "total": 3059,
+      "total": 2899,
       "null": 1,
       "complete_pct": 99.97
     },
     "dim_labelled": {
-      "ok": true,
-      "unlabelled_embedded": 0
+      "ok": false,
+      "unlabelled_embedded": 7
     },
     "titles_present": {
       "ok": true,
@@ -51,15 +51,15 @@
       "zimra",
       "zimsec"
     ],
-    "documents": 903,
-    "chunks": 3059,
+    "documents": 889,
+    "chunks": 2899,
     "ocr_documents": 8
   },
   "chunks_by_ministry": {
     "education": 3,
     "finance": 490,
     "health": 201,
-    "home_affairs": 342,
+    "home_affairs": 182,
     "ict": 465,
     "veritas": 393,
     "zimlii": 1,
