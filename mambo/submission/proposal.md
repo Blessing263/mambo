@@ -23,7 +23,7 @@ project_id: "mambo"
 
 **Date:** 3 July 2026
 
-**Live demo:** https://mambo.yttrix.tech
+**Live demo:** https://mambo.yttrix.tech (citizen chat) · https://mambo.yttrix.tech/admin (ministry portal)
 :::
 
 # 1. Problem Definition & Strategic Alignment
@@ -56,7 +56,7 @@ sovereignty: official-source grounding with citations (trustworthy); abstention 
 honest status (responsible); mobile-first free access (inclusive); a self-hostable
 open-source stack with a CCE roadmap (sovereign, local). It is whole-of-government
 — one brain, many ministries — led by ICT and designed so every ministry plugs in
-via a curated registry.
+via a curated registry. Each ministry also gets its own **customer-service portal** to see what citizens ask, curate vetted answers, and handle handoffs.
 
 # 2. Technical Design & Product Logic
 
@@ -84,7 +84,8 @@ generate or fall back → trust layer`. The safety guard abstains before retriev
 | Retrieval | Ministry-scoped cosine + recency boost | Newest version of an amended law wins |
 | Webchat | Next.js 14, streaming SSE, mobile-first | Low-bandwidth, always-on |
 
-**Data.** 903 official documents / 3,059 chunks from 9 allow-listed sources
+**Data.** 889 official documents / 2,901 chunks from 9+ official sources
+(5 ministries + ZIMRA, ZIMSEC, Veritas, ZimLII, + embassy/consulate procedure pages).
 (5 ministries + ZIMRA, ZIMSEC, Veritas, ZimLII). Every chunk stores source URL,
 page, fetch date, content hash and raw path — so every citation is verifiable.
 
@@ -98,11 +99,17 @@ ground generation in them. We do not apply AI where a rule would do.
 `[n]` citations on every answer; honest **evidence-status badge** (answered /
 partial / unsupported / declined); a deterministic **abstention guard** (medical,
 legal, personal-data, political, prompt-injection); **service-journey cards** for
-six common tasks; **ministry handoff cards**; streaming; mobile-first; light/dark
-themes.
+six common tasks; **ministry handoff cards**; **live "thinking" steps** that narrate
+the retrieval; streaming; mobile-first; light/dark themes; a **designed national
+identity** (Spectral/Hanken typography, flag-palette tokens, a Seal/Mark/Wordmark);
+and a **ministry customer-service portal** (`/admin`) with per-ministry login,
+a scoped analytics dashboard (top questions, fallback rate, feedback), and
+**reviewed-answer curation** — staff vet the top questions, and citizens get those
+answers **instantly** (sub-second, zero LLM cost) via the reviewed-answer
+short-circuit.
 
 **Measured results (not asserted).** A fresh build from a clean checkout boots;
-**59 automated tests pass**. On the corpus and a 32-question citizen-query set:
+**67 automated tests pass**. On the corpus and a 32-question citizen-query set:
 
 | Metric | Result |
 |---|---|
@@ -111,6 +118,7 @@ themes.
 | Corpus integrity checks | 8 / 8 pass |
 | Citation link liveness (sample) | 8 / 8 resolved |
 | "Official-sources-only" claim | True (web verifier off by default) |
+| Reviewed-answer latency | <1 s (instant, zero LLM) — curated by ministry staff |
 
 Honest gaps are disclosed, not hidden: education (3 chunks) and ZimLII (1) are
 thin; Shona/Ndebele router accuracy is 60% (Phase 2; embeddings are already
@@ -118,10 +126,11 @@ multilingual).
 
 # 3. Deliverables & CCE Implementation Roadmap
 
-**What is delivered.** A working end-to-end MVP (ingestion → RAG → webchat),
-deployed and demonstrable; a reproducible test and evaluation harness; and a full
-submission evidence pack (data governance, deployment, business, design,
-evaluation).
+**What is delivered.** A working **two-sided** product: a citizen-facing RAG
+assistant (ingestion → retrieve → generate → trust) AND a ministry customer-service
+portal (per-ministry login, analytics dashboard, reviewed-answer curation). Both
+are deployed and demonstrable; the codebase includes 67 tests, a full evidence
+pack, and a designed national identity system.
 
 **Timeline (8 weeks of AI4I support).**
 
@@ -167,8 +176,10 @@ mobile-first low-bandwidth is the user-facing strategy.
 the official app; per-IP rate limiting + concurrent-stream cap; bot user-agent
 blocklist + behaviour/entropy checks; validated input sizes; docs/redoc disabled in
 production; secrets never committed. The deterministic abstention guard and
-official-sources-only retrieval harden the content layer. (59 tests cover nonce,
-abstention, and security behaviour.)
+official-sources-only retrieval harden the content layer. (67 tests cover nonce,
+abstention, security, schema, and the reviewed-answer streaming path.) The admin
+portal adds **session-cookie auth** (bcrypt, httpOnly, SameSite-Lax, ministry-scoped
+SQL so staff only see their own data; rate-limited login; generic 401).
 
 **Responsible AI.** Mandatory citations; a confidence threshold below which Mambo
 does not guess; the evidence-status badge; abstention for out-of-scope/unsafe
@@ -196,9 +207,10 @@ keystone) → embeddable widget on live ministry sites + low-bandwidth channels
 (WhatsApp).
 
 **Maintainability.** Incremental refresh re-ingests only changed documents; a
-quarterly re-verification cadence; a reviewed-answer cache for the top ~50
-questions per ministry that doubles as a rule-baseline fallback; monitoring that
-drives what to fix next.
+quarterly re-verification cadence; the **reviewed-answer cache** — now live in the
+admin portal, where ministry staff curate the top questions and citizens get those
+answers instantly (sub-second, no LLM call); monitoring that drives what to fix
+next.
 
 ---
 
