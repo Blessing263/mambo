@@ -19,8 +19,8 @@
       "complete_pct": 99.97
     },
     "dim_labelled": {
-      "ok": false,
-      "unlabelled_embedded": 7
+      "ok": true,
+      "unlabelled_embedded": 0
     },
     "titles_present": {
       "ok": true,
