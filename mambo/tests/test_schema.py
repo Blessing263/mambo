@@ -35,3 +35,19 @@ def test_chunks_has_dim_and_deferred_embed_indexes():
     assert "dim" in SCHEMA
     assert "idx_chunks_pending" in SCHEMA      # WHERE embedding IS NULL
     assert "idx_chunks_dim" in SCHEMA          # WHERE embedding IS NOT NULL
+
+
+def test_admin_staff_table():
+    block = _table("staff")
+    assert "password_hash" in block
+    assert "email" in block and "ministry_id" in block
+
+
+def test_staff_sessions_table():
+    assert "CREATE TABLE IF NOT EXISTS staff_sessions" in SCHEMA
+    assert "idx_staff_sessions_staff" in SCHEMA
+
+
+def test_reviewed_answers_has_question_norm():
+    assert "question_norm" in SCHEMA
+    assert "idx_reviewed_enabled" in SCHEMA

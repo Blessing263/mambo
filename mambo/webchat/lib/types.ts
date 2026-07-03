@@ -38,6 +38,27 @@ export interface DoneMeta {
   evidence_status?: "answered" | "partial" | "unsupported" | "declined";
   decline_reason?: string | null;
   service_journey?: string | null;
+  reviewed?: boolean;
+}
+
+export interface Staff {
+  id: string; email: string; name: string; role: string;
+  ministry_id: string | null; ministry_short_name: string | null;
+}
+export interface ReviewedAnswer {
+  id: string; question: string; answer: string;
+  citations: any[]; enabled: boolean; updated_at: string | null;
+}
+export interface AdminQuery {
+  asked_at: string | null; question: string;
+  confident: boolean | null; answered: boolean | null;
+  feedback: number | null; latency_ms: number | null; ministries: string[];
+}
+export interface AdminStats {
+  total: number; answered: number; fallback_rate: number | null; avg_feedback: number | null;
+  top_questions: { question: string; count: number }[];
+  top_unanswered: { question: string; count: number }[];
+  series: { day: string | null; count: number }[];
 }
 
 export type StatusStep = "route" | "search" | "read" | "verify";

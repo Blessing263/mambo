@@ -26,7 +26,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from shared.db import healthcheck
 
-from . import llm, service, trust
+from . import admin, llm, service, trust
 from .catalog import by_id, ministries
 from .security import (
     _behavior_check,
@@ -95,6 +95,8 @@ app = FastAPI(
     docs_url=None if IS_PROD else "/docs",
     redoc_url=None if IS_PROD else "/redoc",
 )
+
+app.include_router(admin.router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -224,6 +226,26 @@ def ask_stream(req: AskRequest, request: Request) -> StreamingResponse:
                 service._log_stream(
                     req.question, req.session_id, d.get("source_ministry", []),
                     {"confident": False, "citations": []}, 0,
+                    client_ip=client_ip, user_agent=user_agent,
+                )
+                return
+
+            if "reviewed" in prep and prep["reviewed"]:
+                # Curated (ministry-vetted) answer — served instantly, no LLM call.
+                r = prep["reviewed"]
+                yield _sse({"type": "delta", "text": r["answer"]})
+                yield _sse({
+                    "type": "done",
+                    "source_ministry": r["source_ministry"],
+                    "citations": r["citations"],
+                    "confident": True,
+                    "evidence_status": "answered",
+                    "reviewed": True,
+                    "fallback_contact": None,
+                })
+                service._log_stream(
+                    req.question, req.session_id, r["source_ministry"],
+                    {"confident": True, "citations": r["citations"]}, 0,
                     client_ip=client_ip, user_agent=user_agent,
                 )
                 return

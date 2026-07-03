@@ -13,6 +13,7 @@ from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeou
 from shared.db import get_conn
 
 from . import guard, journeys, llm, retrieval, router, trust
+from .auth import normalize_question
 
 # Classify intent in parallel with retrieval so a real question doesn't pay
 # classify latency on top of retrieval latency. Bounded pool; classify (an LLM
@@ -134,6 +135,29 @@ def _log_stream(question, session_id, detected, resp, latency_ms,
     _log(question, session_id, detected, resp, latency_ms, client_ip, user_agent)
 
 
+def get_reviewed(question: str) -> dict | None:
+    """Exact-match a human-vetted (curated) answer. Returns a full response dict, or None.
+    Runs AFTER the safety guard (unsafe questions still decline) and BEFORE the LLM —
+    so a curated top question is answered instantly with zero model cost."""
+    norm = normalize_question(question)
+    try:
+        with get_conn() as conn, conn.cursor() as cur:
+            cur.execute(
+                "SELECT ministry_id, answer, citations FROM reviewed_answers "
+                "WHERE question_norm = %s AND enabled ORDER BY updated_at DESC LIMIT 1;",
+                (norm,))
+            row = cur.fetchone()
+    except Exception:
+        return None
+    if not row:
+        return None
+    return {
+        "answer": row["answer"], "source_ministry": [row["ministry_id"]],
+        "citations": row["citations"], "confident": True,
+        "evidence_status": "answered", "reviewed": True, "fallback_contact": None,
+    }
+
+
 def ask(question: str, *, history: list[dict] | None = None,
         ministry_filter: str | None = None, session_id: str | None = None,
         client_ip: str = "", user_agent: str = "") -> dict:
@@ -156,6 +180,13 @@ def ask(question: str, *, history: list[dict] | None = None,
         _log(question, session_id, ref or [], resp, int((time.time() - t0) * 1000),
              client_ip, user_agent)
         return resp
+
+    # ── Reviewed-answer short-circuit — serve a ministry-vetted answer instantly ──
+    rev = get_reviewed(question)
+    if rev:
+        _log(question, session_id, rev["source_ministry"], rev,
+             int((time.time() - t0) * 1000), client_ip, user_agent)
+        return rev
 
     # ── Intent gate — greetings, thanks, capability, off-topic ──
     intent = llm.classify_intent(question)
@@ -223,6 +254,11 @@ def prepare_stream(question: str, history: list[dict] | None = None,
             "fallback_contact": contacts or None,
             "decline_reason": category,
         }}
+
+    # ── Reviewed-answer short-circuit — serve a ministry-vetted answer instantly ──
+    rev = get_reviewed(question)
+    if rev:
+        return {"reviewed": rev}
 
     # ── Intent gate, run in parallel with retrieval ──
     # classify_intent has a regex pre-gate, so obvious greetings/thanks/capability

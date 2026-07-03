@@ -20,6 +20,9 @@ dependencies = [
     "pytesseract>=0.3.10",    # OCR via system tesseract
     "Pillow>=10.0",
     "python-docx>=1.1",       # .docx extraction (official forms/guides)
+    # Admin portal auth
+    "bcrypt>=4.2",            # staff password hashing
+    "email-validator>=2.0",   # Pydantic EmailStr (admin login)
     # Knowledge Store
     "psycopg[binary]>=3.2",
     "pgvector>=0.3",

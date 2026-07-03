@@ -84,3 +84,23 @@ def test_low_confidence_fallback(client, reset_security, get_nonce, monkeypatch)
     assert done["confident"] is False
     assert done["fallback_contact"] is not None
     assert "ICT" in deltas
+
+
+def test_reviewed_answer_served_instantly(client, reset_security, get_nonce, monkeypatch):
+    """A ministry-curated answer is served verbatim, instantly, with reviewed=True."""
+    reviewed = {
+        "answer": "Vetted: bring your birth certificate [1].",
+        "source_ministry": ["home_affairs"],
+        "citations": [{"title": "ID Guide", "page": 1, "url": "https://moha.gov.zw/x", "ministry": "home_affairs"}],
+        "confident": True, "evidence_status": "answered", "reviewed": True, "fallback_contact": None,
+    }
+    monkeypatch.setattr(service, "prepare_stream",
+        lambda q, h, ministry_filter=None: {"reviewed": reviewed})
+    monkeypatch.setattr(service, "_log_stream", lambda *a, **k: None)
+    events = _events(client, get_nonce())
+    deltas = "".join(e["text"] for e in events if e["type"] == "delta")
+    done = next(e for e in events if e["type"] == "done")
+    assert deltas == "Vetted: bring your birth certificate [1]."   # curated text, verbatim
+    assert done["reviewed"] is True
+    assert done["evidence_status"] == "answered"
+    assert len(done["citations"]) == 1

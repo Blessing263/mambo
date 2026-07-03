@@ -123,3 +123,34 @@ CREATE TABLE IF NOT EXISTS reviewed_answers (
     enabled     boolean     NOT NULL DEFAULT true,
     updated_at  timestamptz NOT NULL DEFAULT now()
 );
+
+-- Fast exact-match lookup for the reviewed-answer short-circuit (normalised question).
+ALTER TABLE reviewed_answers ADD COLUMN IF NOT EXISTS question_norm text;
+CREATE INDEX IF NOT EXISTS idx_reviewed_enabled
+    ON reviewed_answers (ministry_id, question_norm) WHERE enabled;
+CREATE INDEX IF NOT EXISTS idx_reviewed_ministry ON reviewed_answers (ministry_id);
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Admin portal (Track 3) — ministry-staff auth + reviewed-answer curation.
+-- staff: one row per ministry agent (scoped to their ministry_id).
+-- staff_sessions: opaque session tokens (httpOnly cookie), revocable.
+-- ─────────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS staff (
+    id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    ministry_id   text REFERENCES ministries(id) ON DELETE CASCADE,
+    email         text UNIQUE NOT NULL,
+    name          text        NOT NULL,
+    role          text        NOT NULL DEFAULT 'agent',   -- agent | supervisor
+    password_hash text        NOT NULL,
+    created_at    timestamptz NOT NULL DEFAULT now(),
+    last_login_at timestamptz
+);
+
+CREATE TABLE IF NOT EXISTS staff_sessions (
+    token      text PRIMARY KEY,
+    staff_id   uuid        NOT NULL REFERENCES staff(id) ON DELETE CASCADE,
+    expires_at timestamptz NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_staff_sessions_staff   ON staff_sessions (staff_id);
+CREATE INDEX IF NOT EXISTS idx_staff_sessions_expires ON staff_sessions (expires_at);

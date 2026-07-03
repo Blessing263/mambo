@@ -54,6 +54,7 @@ _WINDOWS: dict[str, tuple[int, int]] = {  # seconds, max
     "/nonce":      (10, 30),
     "/health":     (60, 60),
     "/ministries": (60, 60),
+    "/admin/login": (60, 10),  # staff login: 10/min per IP
     # /ask/stream handled by _concurrent dict
 }
 
