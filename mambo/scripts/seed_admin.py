@@ -53,6 +53,82 @@ SAMPLE_REVIEWED = [
         ),
         "citations": [{"title": "Ministry of ICT, Postal & Courier Services", "url": "https://www.ictministry.gov.zw/", "ministry": "ict"}],
     },
+    {
+        "ministry_id": "home_affairs",
+        "question": "How do I apply for a passport?",
+        "answer": (
+            "**Eligibility**\nZimbabwean citizens of any age (minors need a parent/guardian to sign).\n\n"
+            "**What to bring**\n- Original long birth certificate + photocopy\n- National ID (driver's licence NOT accepted)\n"
+            "- Current or expired passport (if renewing)\n- 2 colour passport photos (3.5cm × 4.5cm, white background, dark clothes)\n"
+            "- Marriage certificate (if surname changed)\n- Police report (if lost/stolen)\n\n"
+            "**Steps**\n1. Complete the application form at the Passport Office.\n2. Book a biometric capture appointment.\n"
+            "3. Attend in person for biometrics (fingerprints, photo).\n4. Pay the applicable fee.\n\n"
+            "**Fees**\nOrdinary: US$50 | Urgent (3 working days): US$250 | Executive (1 day): US$315\n\n"
+            "**Where to apply**\nThe Passport Office (Harare/Bulawayo) or any Zimbabwe embassy/consulate abroad."
+        ),
+        "citations": [
+            {"title": "Embassy of Zimbabwe to the USA — Passport Information", "url": "https://zimembassydc.org/passport-information/", "ministry": "home_affairs"},
+            {"title": "Zimbabwe Embassy Lusaka — Passport Application", "url": "http://www.zimlusaka.gov.zw/passport-application/", "ministry": "home_affairs"},
+        ],
+    },
+    {
+        "ministry_id": "zimra",
+        "question": "How do I get a tax clearance certificate?",
+        "answer": (
+            "**Eligibility**\nYou must be a registered taxpayer with ZIMRA (registered under Section 42 of the Income Tax Act) "
+            "and be fully tax-compliant — all returns filed, all taxes paid.\n\n"
+            "**What you need**\n- A valid Taxpayer Identification Number (TIN/BPN)\n- All tax returns up to date\n- No outstanding tax debts\n\n"
+            "**Steps**\n1. Ensure you are registered with ZIMRA and have a Business Partner Number (BPN).\n"
+            "2. File all outstanding returns and pay any amounts due.\n"
+            "3. The Tax Clearance Certificate (ITF263) is **auto-generated** by the ZIMRA TaRMS system "
+            "for compliant taxpayers — no manual application is needed.\n"
+            "4. It is sent to the email address ZIMRA has on record for your business.\n\n"
+            "**Fees**\nNo fee — the certificate is issued free to compliant taxpayers.\n\n"
+            "**Where to apply**\nOnline via the ZIMRA TaRMS portal, or visit any ZIMRA office for assistance."
+        ),
+        "citations": [
+            {"title": "ZIMRA — Tax Clearance Certificate (ITF263)", "url": "https://www.zimra.co.zw/news/2235:tax-clearance-certificate-itf263-2", "ministry": "zimra"},
+        ],
+    },
+    {
+        "ministry_id": "home_affairs",
+        "question": "How do I register a birth certificate?",
+        "answer": (
+            "**Eligibility**\nAny child born in Zimbabwe to Zimbabwean parents, or children of Zimbabwean citizens born abroad. "
+            "Registration should be done as soon as possible after birth (within 42 days).\n\n"
+            "**What to bring**\n- Completed Birth Registration form (BD3)\n- Child's birth record from the hospital or clinic\n"
+            "- Both parents' national identity cards\n- Parents' marriage certificate (if applicable)\n- One witness with a valid national ID\n\n"
+            "**Steps**\n1. Obtain the birth record from the hospital/clinic where the child was born.\n"
+            "2. Complete the BD3 registration form.\n3. Bring all documents to the Civil Registry office.\n"
+            "4. The birth certificate is typically issued on the same day.\n\n"
+            "**Fees**\nFirst registration is free. Late registration may attract a fee.\n\n"
+            "**Where to apply**\nAny Civil Registry office or the Registrar General's office."
+        ),
+        "citations": [
+            {"title": "Embassy of Zimbabwe to the USA — Notice of Birth", "url": "https://zimembassydc.org/notice-of-birth/", "ministry": "home_affairs"},
+            {"title": "Ministry of Home Affairs and Cultural Heritage", "url": "https://www.moha.gov.zw/en/", "ministry": "home_affairs"},
+        ],
+    },
+    {
+        "ministry_id": "zimsec",
+        "question": "How do I check exam results or replace a certificate?",
+        "answer": (
+            "**Eligibility**\nAny candidate who has written ZIMSEC examinations (Grade 7, O-Level, or A-Level).\n\n"
+            "**Important:** ZIMSEC does **NOT** issue duplicate certificates. Instead, they provide a **Certifying Statement of Results** "
+            "which serves as official confirmation of your examination results.\n\n"
+            "**What to bring**\n- Completed Confirmation of Results form (available on the ZIMSEC website or at any ZIMSEC office)\n"
+            "- Your original examination details (centre number, candidate number, year sat, subjects)\n- A valid national ID\n- Fee payment\n\n"
+            "**Steps**\n1. Complete the Confirmation of Results form (ZGCE Certifying Statement).\n"
+            "2. Apply online at www.zimsec.co.zw or in person at your nearest ZIMSEC regional office.\n3. Pay the applicable fee.\n"
+            "4. The Certifying Statement is sent directly to the requesting authority (institution/employer), not handed to the candidate.\n\n"
+            "**Fees**\nA fee applies; confirm the current amount at the ZIMSEC office or website.\n\n"
+            "**Where to apply**\nZIMSEC regional offices nationwide or online at www.zimsec.co.zw."
+        ),
+        "citations": [
+            {"title": "ZIMSEC — Confirmation of Results", "url": "https://www5.zimsec.co.zw/wp-content/uploads/2025/04/CONFIRMATION-OF-RESULTS2.docx", "ministry": "zimsec"},
+            {"title": "ZIMSEC — Examination Administration", "url": "https://www5.zimsec.co.zw/examinations-administration/", "ministry": "zimsec"},
+        ],
+    },
 ]
 
 
