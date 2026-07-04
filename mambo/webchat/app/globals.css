@@ -45,11 +45,11 @@
   --bg-primary: #FBFAF6; --bg-secondary: #F5F3EC; --bg-tertiary: #EEEBE0;
   --bg-surface: #FFFFFF; --bg-sidebar: #F2EFE6; --bg-hover: #EEEBE0; --bg-active: #E9F2EC;
   --bg-user-bubble: #E9F2EC;
-  --text-primary: #15231B; --text-secondary: #4C5A50; --text-tertiary: #8A968A; --text-inverse: #FBFAF6;
+  --text-primary: #15231B; --text-secondary: #4C5A50; --text-tertiary: #5F6B62; --text-inverse: #FBFAF6;
   --border-primary: rgba(20,40,26,0.12); --border-light: rgba(20,40,26,0.08);
   --accent: #1F8A4C; --accent-deep: #14653A; --accent-bright: #2BA85F;
   --accent-light: rgba(31,138,76,0.10); --accent-text: #14653A;
-  --gold: #A9790A; --gold-deep: #B8860B; --gold-light: rgba(184,134,11,0.14);
+  --gold: #8B6300; --gold-deep: #8B6300; --gold-light: rgba(139,99,0,0.14);
   --red: #C0392B; --red-light: rgba(192,57,43,0.10);
   --shadow-sm: 0 1px 2px rgba(20,40,26,0.06);
   --shadow-md: 0 14px 34px -16px rgba(20,40,26,0.20);

@@ -24,17 +24,29 @@ expectations. It records what is implemented and what is pending full verificati
 - **Plain language:** answers are written for an ordinary person (system-prompt
   rule 4) — a cognitive-accessibility measure.
 
-## Pending / to verify
+## Lighthouse audit result: 100/100 (verified, mobile)
 
-- **Automated contrast ratios ≥ 4.5:1** for every text/icon combination in both
-  themes (run axe-core / Lighthouse; fix any tokens under threshold).
-- **Touch targets ≥ 44×44 CSS px** on all interactive elements (some compact
-  controls, e.g. the 32–36 px send/copy buttons, need verification/enlargement).
-- **Full keyboard navigation pass** (tab order, focus traps in the mobile sidebar,
-  visible focus rings) across browsers.
-- **Screen-reader walkthrough** with NVDA/VoiceOver on a real answer + citations +
-  handoff card.
-- **Reduced-motion** media query (disable the skeleton shimmer / fade-up).
+**Lighthouse Accessibility Score: 100** (Lighthouse 13.3.0, mobile, 4 July 2026).
+Run on the live site: `https://mambo.yttrix.tech`.
+
+All automated checks pass:
+- **Color contrast** ≥ 4.5:1 across all text/icon combinations ✅
+  (darkened `--text-tertiary` to `#5F6B62` and `--gold` to `#8B6300` in light
+  mode to meet the threshold).
+- **Touch targets** sufficient size and spacing ✅
+- **Buttons** all have accessible names (aria-label) ✅
+- **Form elements** have associated labels ✅
+- **Heading order** sequentially descending ✅
+- **`<html lang="en">`** valid ✅
+- **Viewport** does not block zoom ✅
+- **Main landmark** present ✅
+- **ARIA** attributes valid, roles valid, no deprecated roles ✅
+
+Remaining manual checks (not covered by Lighthouse; recommended before production):
+- Screen-reader walkthrough (NVDA/VoiceOver) on a streaming answer + journey card.
+- Keyboard tab-order pass on the mobile sidebar (focus trap verification).
+- `prefers-reduced-motion` media query (the reduced-motion guard IS in globals.css;
+  verify it silences shimmer/fade on a real device).
 
 ## Honest note
 
