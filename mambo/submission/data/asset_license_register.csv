@@ -1,5 +1,5 @@
 component,category,version,license,source,notes
-Mambo application code,Code,-,MIT,Own work,Licensed MIT (see LICENSE at repo root).
+Mambo application code,Code,-,Apache-2.0,Own work,Licensed Apache-2.0; attribution to Kundai Guvaza and Blessing B. Guvaza must be preserved (see LICENSE and NOTICE at repo root).
 FastAPI,Python package,>=0.115,MIT,https://github.com/tiangolo/fastapi,RAG API.
 uvicorn,Python package,>=0.30,BSD-3-Clause,https://github.com/encode/uvicorn,ASGI server.
 openai (python SDK),Python package,>=1.40,MIT,https://github.com/openai/openai-python,OpenAI-compatible client used to call DeepSeek.

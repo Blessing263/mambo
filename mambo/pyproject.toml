@@ -2,6 +2,11 @@
 name = "mambo"
 version = "0.1.0"
 description = "Mambo — plain-language information assistant for the Government of Zimbabwe"
+license = "Apache-2.0"
+authors = [
+    { name = "Kundai Guvaza", email = "guvazakundai@gmail.com" },
+    { name = "Blessing B. Guvaza", email = "guvazab@gmail.com" },
+]
 requires-python = ">=3.12"
 dependencies = [
     # API (Module 2 — RAG)
