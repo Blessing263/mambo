@@ -1,4 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="8" fill="#1f8a4c"/>
-  <text x="16" y="22" text-anchor="middle" font-family="system-ui" font-weight="700" font-size="18" fill="#fff">R</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <clipPath id="c"><rect x="2" y="2" width="96" height="96" rx="24"/></clipPath>
+  </defs>
+  <rect x="2" y="2" width="96" height="96" rx="24" fill="#17693C"/>
+  <g clip-path="url(#c)">
+    <path d="M-2 84 L10 70 L22 84 L34 70 L46 84 L58 70 L70 84 L82 70 L94 84 L106 70" fill="none" stroke="#D9A61E" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g transform="translate(50 40) scale(0.44) translate(-50 -50)">
+    <path d="M50 6 L61.8 38.2 L96 38.2 L68.1 58.6 L79.4 92 L50 71.5 L20.6 92 L31.9 58.6 L4 38.2 L38.2 38.2 Z" fill="#EEBE3B"/>
+  </g>
 </svg>

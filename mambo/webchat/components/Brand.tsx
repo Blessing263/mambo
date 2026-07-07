@@ -2,66 +2,63 @@
 
 import { useId } from "react";
 
-/* Mambo emblem system — geometric national seal, app mark, wordmark, ribbon.
-   Ported from frontend/emblem.jsx, rebranded Mambo. Heraldic/geometric only.
-   Gradient IDs are made unique per instance (useId) to avoid SVG <defs> collisions. */
+/* Mambo emblem system — flat civic seal, app mark, wordmark, ribbon.
+   Design language: flat geometry, no gradients/gloss. The zigzag band quotes
+   the chevron (dentelle) masonry course of the Great Zimbabwe walls; the gold
+   five-point star sits in the field above it. Clip IDs are unique per
+   instance (useId) to avoid SVG <defs> collisions. */
 
 const STAR_PATH =
   "M50 6 L61.8 38.2 L96 38.2 L68.1 58.6 L79.4 92 L50 71.5 L20.6 92 L31.9 58.6 L4 38.2 L38.2 38.2 Z";
 
+const FIELD_GREEN = "#17693C";
+const RING_GOLD = "#D9A61E";
+const STAR_GOLD = "#EEBE3B";
+
+const CHEVRON_HI = "M2 80 L11 68 L20 80 L29 68 L38 80 L47 68 L56 80 L65 68 L74 80 L83 68 L92 80 L101 68";
+const CHEVRON_LO = "M2 94 L11 82 L20 94 L29 82 L38 94 L47 82 L56 94 L65 82 L74 94 L83 82 L92 94 L101 82";
+
 export function Seal({
-  size = 44, ring = true, glow = false,
+  size = 44, ring = true, glow: _glow = false,
 }: { size?: number; ring?: boolean; glow?: boolean }) {
-  const uid = useId().replace(/:/g, "");
-  const field = `sf${uid}`, star = `ss${uid}`, rg = `sr${uid}`;
+  const clip = `sc${useId().replace(/:/g, "")}`;
   return (
-    <span style={{ position: "relative", display: "inline-grid", placeItems: "center", width: size, height: size, flexShrink: 0 }}>
+    <span style={{ display: "inline-grid", placeItems: "center", width: size, height: size, flexShrink: 0 }}>
       <svg width={size} height={size} viewBox="0 0 100 100" style={{ display: "block" }} aria-hidden="true">
         <defs>
-          <radialGradient id={field} cx="38%" cy="30%" r="80%">
-            <stop offset="0%" stopColor="#2BA85F" /><stop offset="58%" stopColor="#1F8A4C" /><stop offset="100%" stopColor="#125C34" />
-          </radialGradient>
-          <linearGradient id={star} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#F6D375" /><stop offset="100%" stopColor="#E0A92A" />
-          </linearGradient>
-          <linearGradient id={rg} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#F2CE6A" /><stop offset="50%" stopColor="#C79420" /><stop offset="100%" stopColor="#E8B530" />
-          </linearGradient>
+          <clipPath id={clip}><circle cx="50" cy="50" r="44" /></clipPath>
         </defs>
-        {ring && <circle cx="50" cy="50" r="49" fill={`url(#${rg})`} />}
-        <circle cx="50" cy="50" r={ring ? 43 : 49} fill={`url(#${field})`} />
-        {ring && <circle cx="50" cy="50" r="43" fill="none" stroke="rgba(0,0,0,0.18)" strokeWidth="0.8" />}
-        <g transform="translate(50 50) scale(0.62) translate(-50 -50)">
-          <path d={STAR_PATH} fill={`url(#${star})`} stroke="rgba(120,80,0,0.25)" strokeWidth="1" strokeLinejoin="round" />
+        <circle cx="50" cy="50" r="48" fill={FIELD_GREEN} />
+        <g clipPath={`url(#${clip})`}>
+          <path d={CHEVRON_HI} fill="none" stroke={RING_GOLD} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+          <path d={CHEVRON_LO} fill="none" stroke={RING_GOLD} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" opacity="0.45" />
         </g>
-        <ellipse cx="42" cy="28" rx="26" ry="14" fill="rgba(255,255,255,0.14)" />
+        <g transform="translate(50 40) scale(0.34) translate(-50 -50)">
+          <path d={STAR_PATH} fill={STAR_GOLD} />
+        </g>
+        {ring && <circle cx="50" cy="50" r="48" fill="none" stroke={RING_GOLD} strokeWidth="3" />}
       </svg>
-      {glow && (
-        <span style={{ position: "absolute", inset: -10, borderRadius: "50%", zIndex: -1, background: "radial-gradient(circle, rgba(56,192,117,0.45), transparent 70%)", filter: "blur(8px)" }} />
-      )}
     </span>
   );
 }
 
 export function Mark({ size = 30, radius = 9 }: { size?: number; radius?: number }) {
-  const uid = useId().replace(/:/g, "");
-  const field = `mf${uid}`, st = `ms${uid}`;
+  const clip = `mc${useId().replace(/:/g, "")}`;
+  const rx = (radius * 100) / size;
   return (
     <span style={{ width: size, height: size, display: "inline-grid", placeItems: "center", flexShrink: 0 }}>
       <svg width={size} height={size} viewBox="0 0 100 100" style={{ display: "block" }} aria-hidden="true">
         <defs>
-          <radialGradient id={field} cx="36%" cy="28%" r="85%">
-            <stop offset="0%" stopColor="#2BA85F" /><stop offset="60%" stopColor="#1F8A4C" /><stop offset="100%" stopColor="#11542F" />
-          </radialGradient>
-          <linearGradient id={st} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#F6D375" /><stop offset="100%" stopColor="#E0A92A" />
-          </linearGradient>
+          <clipPath id={clip}><rect x="2" y="2" width="96" height="96" rx={rx} /></clipPath>
         </defs>
-        <rect x="2" y="2" width="96" height="96" rx={(radius * 100) / size} fill={`url(#${field})`} />
-        <rect x="2" y="2" width="96" height="96" rx={(radius * 100) / size} fill="none" stroke="rgba(236,192,74,0.5)" strokeWidth="2" />
-        <g transform="translate(50 50) scale(0.52) translate(-50 -50)">
-          <path d={STAR_PATH} fill={`url(#${st})`} />
+        <rect x="2" y="2" width="96" height="96" rx={rx} fill={FIELD_GREEN} />
+        <g clipPath={`url(#${clip})`}>
+          <path d="M-2 84 L10 70 L22 84 L34 70 L46 84 L58 70 L70 84 L82 70 L94 84 L106 70" fill="none" stroke={RING_GOLD} strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
         </g>
+        <g transform="translate(50 40) scale(0.4) translate(-50 -50)">
+          <path d={STAR_PATH} fill={STAR_GOLD} />
+        </g>
+        <rect x="2" y="2" width="96" height="96" rx={rx} fill="none" stroke="rgba(217,166,30,0.7)" strokeWidth="2.5" />
       </svg>
     </span>
   );
