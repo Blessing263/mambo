@@ -63,6 +63,8 @@ def test_unscoped_miss_stays_honest(monkeypatch):
 
 
 def test_reviewed_answer_respects_active_ministry_filter(monkeypatch):
+    service.invalidate_reviewed_cache()
+
     class Cur:
         row = None
 
@@ -103,6 +105,57 @@ def test_reviewed_answer_respects_active_ministry_filter(monkeypatch):
 
     monkeypatch.setattr(service, "get_conn", lambda: Conn())
 
-    assert service.get_reviewed("How do I apply for a passport?", "finance") is None
-    assert service.get_reviewed("How do I apply for a passport?", "home_affairs")["source_ministry"] == ["home_affairs"]
-    assert service.get_reviewed("How do I apply for a passport?")["source_ministry"] == ["home_affairs"]
+    try:
+        assert service.get_reviewed("How do I apply for a passport?", "finance") is None
+        assert service.get_reviewed("How do I apply for a passport?", "home_affairs")["source_ministry"] == ["home_affairs"]
+        assert service.get_reviewed("How do I apply for a passport?")["source_ministry"] == ["home_affairs"]
+    finally:
+        service.invalidate_reviewed_cache()
+
+
+def test_reviewed_cache_invalidation_allows_new_admin_answers(monkeypatch):
+    service.invalidate_reviewed_cache()
+    service._rev_known = set()
+    service._rev_known_loaded = True
+    calls = {"db": 0}
+
+    class Cur:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def execute(self, _sql, _params=None):
+            calls["db"] += 1
+
+        def fetchone(self):
+            return {
+                "ministry_id": "home_affairs",
+                "answer": "Passport answer",
+                "citations": [],
+            }
+
+    class Conn:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def cursor(self):
+            return Cur()
+
+    monkeypatch.setattr(service, "get_conn", lambda: Conn())
+
+    try:
+        assert service.get_reviewed("How do I apply for a passport?") is None
+        assert calls["db"] == 0
+
+        service.invalidate_reviewed_cache()
+
+        reviewed = service.get_reviewed("How do I apply for a passport?")
+        assert reviewed["source_ministry"] == ["home_affairs"]
+        assert calls["db"] == 1
+    finally:
+        service.invalidate_reviewed_cache()

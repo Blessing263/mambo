@@ -1,0 +1,53 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ruzivo
+      POSTGRES_USER: ruzivo
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./shared/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ruzivo"]
+      interval: 10s
+      retries: 5
+    ports:
+      - "127.0.0.1:5432:5432"
+
+  ollama:
+    image: ollama/ollama:0.3.6
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:11435:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        ollama serve &
+        sleep 5
+        ollama pull qwen3-embedding:8b
+        wait
+
+  api:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8770:8770"
+    environment:
+      DATABASE_URL: postgresql://ruzivo:${DB_PASSWORD:?set DB_PASSWORD}@db:5432/ruzivo
+      OLLAMA_BASE_URL: http://ollama:11434
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:?set DEEPSEEK_API_KEY}
+      RUZIVO_ENV: production
+      RUZIVO_ALLOWED_ORIGINS: ${RUZIVO_ALLOWED_ORIGINS:-https://ruzivo.yttrix.tech,http://localhost:3055}
+    depends_on:
+      db:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+
+volumes:
+  pgdata:
+  ollama_data:

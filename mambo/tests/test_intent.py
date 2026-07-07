@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import rag.llm as llm
 
 
@@ -41,3 +43,12 @@ def test_classify_regex_thanks():
 
 def test_classify_regex_capability():
     assert llm.classify_intent("What can you do?") == "capability"
+
+
+def test_safe_choice_handles_empty_choices():
+    assert llm._safe_choice(SimpleNamespace(choices=[])) == ""
+
+
+def test_safe_choice_handles_empty_message_content():
+    resp = SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=None))])
+    assert llm._safe_choice(resp) == ""

@@ -7,21 +7,20 @@ from __future__ import annotations
 
 import json
 import re
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeout
 
 from shared.db import get_conn
+from shared.config import settings
 
 from . import guard, journeys, llm, retrieval, router, trust
 from .auth import normalize_question
 
-# Classify intent in parallel with retrieval so a real question doesn't pay
-# classify latency on top of retrieval latency. Bounded pool; classify (an LLM
-# call, no DB) is the only task submitted here.
 _EXEC = ThreadPoolExecutor(max_workers=4)
 
 _CITE_RE = re.compile(r"\[(\d+)\]")
-K = 6
+K = settings.retrieval_top_k
 
 # Phrases that signal the answer is incomplete — when present, surface contacts
 _HEDGE = re.compile(
@@ -107,39 +106,55 @@ def _citations_from_answer(answer: str, contexts: list[dict]) -> list[dict]:
     return unique
 
 
-def _log(question, session_id, detected, resp, latency_ms,
+def _log(question, session_id, detected, resp, latency_ms, token_count: int = 0,
          client_ip: str = "", user_agent: str = "") -> None:
-    try:
-        with get_conn() as conn, conn.cursor() as cur:
-            cur.execute(
-                """
-                INSERT INTO query_log
-                    (session_id, question, detected_ministries, confident,
-                     answered, citations, latency_ms, client_ip, user_agent)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
-                """,
-                (
-                    session_id, question, detected, resp["confident"],
-                    resp["confident"], json.dumps(resp["citations"]), latency_ms,
-                    client_ip[:45] if client_ip else None,
-                    user_agent[:500] if user_agent else None,
-                ),
-            )
-            conn.commit()
-    except Exception:
-        pass  # logging must never break answering
+    """Fire-and-forget: logs via a daemon thread so a slow DB never delays the user."""
+    def _write():
+        try:
+            with get_conn() as conn, conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO query_log
+                        (session_id, question, detected_ministries, confident,
+                         answered, citations, latency_ms, token_count, client_ip, user_agent)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                    """,
+                    (
+                        session_id, question, detected, resp["confident"],
+                        resp["confident"], json.dumps(resp["citations"]), latency_ms,
+                        token_count,
+                        client_ip[:45] if client_ip else None,
+                        user_agent[:500] if user_agent else None,
+                    ),
+                )
+                conn.commit()
+        except Exception:
+            pass  # logging must never break answering
+    threading.Thread(target=_write, daemon=True).start()
 
 
 def _log_stream(question, session_id, detected, resp, latency_ms,
+                token_count: int = 0,
                 client_ip: str = "", user_agent: str = "") -> None:
-    _log(question, session_id, detected, resp, latency_ms, client_ip, user_agent)
+    _log(question, session_id, detected, resp, latency_ms, token_count,
+         client_ip, user_agent)
 
 
 def get_reviewed(question: str, ministry_filter: str | None = None) -> dict | None:
     """Exact-match a human-vetted (curated) answer. Returns a full response dict, or None.
     Runs AFTER the safety guard (unsafe questions still decline) and BEFORE the LLM —
-    so a curated top question is answered instantly with zero model cost."""
+    so a curated top question is answered instantly with zero model cost.
+
+    Uses an in-memory set of known question_norm values to skip the DB hit on 99%+
+    of questions that have no reviewed answer. The set is built from the DB on first
+    call and refreshed when a question reaches the DB query anyway."""
     norm = normalize_question(question)
+    global _rev_known, _rev_known_loaded
+    with _rev_known_lock:
+        known_loaded = _rev_known_loaded
+        known_miss = norm not in _rev_known
+    if known_miss and known_loaded:
+        return None
     try:
         with get_conn() as conn, conn.cursor() as cur:
             if ministry_filter:
@@ -157,6 +172,13 @@ def get_reviewed(question: str, ministry_filter: str | None = None) -> dict | No
     except Exception:
         return None
     if not row:
+        with _rev_known_lock:
+            known_loaded = _rev_known_loaded
+        if not known_loaded:
+            try:
+                _refresh_rev_known()
+            except Exception:
+                pass
         return None
     return {
         "answer": row["answer"], "source_ministry": [row["ministry_id"]],
@@ -165,10 +187,37 @@ def get_reviewed(question: str, ministry_filter: str | None = None) -> dict | No
     }
 
 
+_rev_known: set[str] = set()
+_rev_known_loaded: bool = False
+_rev_known_lock = threading.RLock()
+
+
+def invalidate_reviewed_cache() -> None:
+    """Force reviewed-answer cache rebuild on the next lookup."""
+    global _rev_known, _rev_known_loaded
+    with _rev_known_lock:
+        _rev_known = set()
+        _rev_known_loaded = False
+
+
+def _refresh_rev_known() -> None:
+    global _rev_known, _rev_known_loaded
+    try:
+        with get_conn() as conn, conn.cursor() as cur:
+            cur.execute(
+                "SELECT question_norm FROM reviewed_answers WHERE enabled;")
+            known = {r["question_norm"] for r in cur.fetchall()}
+        with _rev_known_lock:
+            _rev_known = known
+            _rev_known_loaded = True
+    except Exception:
+        pass
+
+
 # A whole-corpus result must beat the scoped shelf's best by this much before
 # the scope is overridden (measured: a true cross-scope miss gaps ~0.2+, while
 # a correctly scoped question retrieves the same top chunk either way).
-_RESCUE_MARGIN = 0.08
+_RESCUE_MARGIN = settings.rescue_margin
 
 
 def _retrieve_with_rescue(search_q: str, detected: list[str]) -> tuple[list[str], list[dict], bool]:
@@ -310,7 +359,10 @@ def prepare_stream(question: str, history: list[dict] | None = None,
     search_q = llm.rewrite_query(question, history) if history else question
     detected = [ministry_filter] if ministry_filter else router.route(search_q)
     detected, results, confident = _retrieve_with_rescue(search_q, detected)
-    intent = classify_fut.result()
+    try:
+        intent = classify_fut.result(timeout=10.0)
+    except FuturesTimeout:
+        intent = "question"  # LLM unreachable — proceed with full RAG anyway
     chatty = llm.chatty_response(intent)
     if chatty is not None:
         return {"intent": intent, "chatty_response": chatty,

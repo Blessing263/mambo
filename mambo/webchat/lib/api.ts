@@ -97,3 +97,14 @@ export async function askStream(
     if ((err as Error)?.name !== "AbortError") handlers.onError(err);
   }
 }
+
+export async function submitFeedback(sessionId: string | null, question: string, feedback: 1 | -1): Promise<boolean> {
+  try {
+    const res = await fetch("/api/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ session_id: sessionId, question, feedback }),
+    });
+    return res.ok;
+  } catch { return false; }
+}

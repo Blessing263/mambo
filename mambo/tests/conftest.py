@@ -53,13 +53,9 @@ def client():
 @pytest.fixture
 def reset_security():
     """Clear in-memory security stores so tests are isolated."""
-    for store in (security._nonce_store, security._hits,
-                  security._concurrent, security._session_last_question):
-        store.clear()
+    security.reset_state()
     yield
-    for store in (security._nonce_store, security._hits,
-                  security._concurrent, security._session_last_question):
-        store.clear()
+    security.reset_state()
 
 
 @pytest.fixture

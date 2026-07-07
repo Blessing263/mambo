@@ -8,10 +8,10 @@
 
 from __future__ import annotations
 
+from shared.config import settings
 from .catalog import by_id
 
-# Minimum cosine similarity of the top retrieved chunk to consider answering.
-CONFIDENCE_THRESHOLD = 0.45
+CONFIDENCE_THRESHOLD = settings.confidence_threshold
 
 
 def assess(results: list[dict]) -> bool:

@@ -1,30 +1,51 @@
 """Knowledge Store access (Postgres + pgvector).
 
-A thin layer over psycopg3 with the pgvector adapter registered so Python lists /
-numpy arrays round-trip to the `vector(4096)` column transparently.
+Connection pooling via psycopg_pool, with the pgvector adapter registered on
+every checked-out connection so Python lists / numpy arrays round-trip to the
+`vector(4096)` column transparently.
 """
 
 from __future__ import annotations
 
 from contextlib import contextmanager
+import threading
 from typing import Iterator
 
 import psycopg
 from pgvector.psycopg import register_vector
 from psycopg.rows import dict_row
+from psycopg_pool import ConnectionPool
 
 from .config import settings
+
+_pool: ConnectionPool | None = None
+_pool_lock = threading.Lock()
+
+
+def _get_pool() -> ConnectionPool:
+    global _pool
+    if _pool is None:
+        with _pool_lock:
+            if _pool is None:
+                pool = ConnectionPool(
+                    settings.database_url,
+                    min_size=2,
+                    max_size=10,
+                    timeout=30,
+                    open=False,
+                    kwargs={"row_factory": dict_row},
+                    configure=register_vector,
+                )
+                pool.open()
+                _pool = pool
+    return _pool
 
 
 @contextmanager
 def get_conn() -> Iterator[psycopg.Connection]:
-    """Yield a connection with dict rows and the pgvector adapter registered."""
-    conn = psycopg.connect(settings.database_url, row_factory=dict_row)
-    try:
-        register_vector(conn)
+    """Yield a pooled connection with dict rows and the pgvector adapter registered."""
+    with _get_pool().connection() as conn:
         yield conn
-    finally:
-        conn.close()
 
 
 def healthcheck() -> dict:

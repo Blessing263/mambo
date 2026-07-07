@@ -10,7 +10,7 @@ script runnable out-of-the-box. Override any value via real environment vars.
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 _SECRETS_KEY_FILE = Path.home() / ".secrets" / "deepseek-api-key"
@@ -28,20 +28,52 @@ def _deepseek_key() -> str:
     )
 
 
+# ── Shared environment-derived values (single source of truth) ─────────────
+# IS_PROD defaults to TRUE so docs/redoc are disabled and cookies are secure
+# unless the operator explicitly sets RUZIVO_ENV=development.
+IS_PROD = os.environ.get("RUZIVO_ENV", "production").lower() != "development"
+
+_ALLOWED_ORIGINS = [
+    h.strip() for h in
+    os.environ.get("RUZIVO_ALLOWED_ORIGINS",
+        "https://mambo.yttrix.tech,https://ruzivo.yttrix.tech,http://localhost:3000,http://localhost:3055"
+    ).split(",") if h.strip()
+]
+
+# ── Runtime tuning knobs (all overridable via env vars) ────────────────────
+RETRIEVAL_TOP_K = int(os.environ.get("RUZIVO_RETRIEVAL_K", "6"))
+CONFIDENCE_THRESHOLD = float(os.environ.get("RUZIVO_RETRIEVAL_CONFIDENCE", "0.45"))
+RESCUE_MARGIN = float(os.environ.get("RUZIVO_RESCUE_MARGIN", "0.08"))
+NONCE_TTL = int(os.environ.get("RUZIVO_NONCE_TTL_SECS", "300"))
+CONCURRENT_STREAMS_MAX = int(os.environ.get("RUZIVO_CONCURRENT_STREAMS", "5"))
+MIN_QUESTION_GAP = float(os.environ.get("RUZIVO_MIN_QUESTION_GAP", "0.5"))
+CLEANUP_INTERVAL = int(os.environ.get("RUZIVO_SECURITY_CLEANUP_SECS", "300"))
+HISTORY_TURNS = int(os.environ.get("RUZIVO_HISTORY_TURNS", "6"))
+RETRIEVAL_OVERSAMPLE = int(os.environ.get("RUZIVO_RETRIEVAL_OVERSAMPLE", "3"))
+SESSION_TTL = int(os.environ.get("RUZIVO_SESSION_TTL_HOURS", "12")) * 3600
+
+
 @dataclass(frozen=True)
 class Settings:
-    # --- DeepSeek (generation / backbone LLM) ---
     deepseek_api_key: str
     deepseek_base_url: str
     deepseek_model: str
-
-    # --- Embeddings (isolated Ollama 0.30.6 on :11435, CPU) ---
     ollama_base_url: str
     embed_model: str
     embed_dim: int
-
-    # --- Knowledge Store ---
     database_url: str
+    is_prod: bool = field(default=IS_PROD)
+    allowed_origins: list[str] = field(default_factory=lambda: _ALLOWED_ORIGINS)
+    retrieval_top_k: int = field(default=RETRIEVAL_TOP_K)
+    confidence_threshold: float = field(default=CONFIDENCE_THRESHOLD)
+    rescue_margin: float = field(default=RESCUE_MARGIN)
+    nonce_ttl: int = field(default=NONCE_TTL)
+    concurrent_streams_max: int = field(default=CONCURRENT_STREAMS_MAX)
+    min_question_gap: float = field(default=MIN_QUESTION_GAP)
+    cleanup_interval: int = field(default=CLEANUP_INTERVAL)
+    history_turns: int = field(default=HISTORY_TURNS)
+    retrieval_oversample: int = field(default=RETRIEVAL_OVERSAMPLE)
+    session_ttl: int = field(default=SESSION_TTL)
 
     @classmethod
     def load(cls) -> "Settings":
@@ -50,16 +82,11 @@ class Settings:
             deepseek_base_url=os.environ.get(
                 "DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1"
             ),
-            # flash is ~6x faster than pro (pro is a reasoning model that "thinks"
-            # ~15-20s first). For grounded RAG, flash quality is more than enough.
             deepseek_model=os.environ.get("DEEPSEEK_MODEL", "deepseek-v4-flash"),
             ollama_base_url=os.environ.get("OLLAMA_BASE_URL", "http://localhost:11435"),
             embed_model=os.environ.get("EMBED_MODEL", "qwen3-embedding:8b"),
             embed_dim=int(os.environ.get("EMBED_DIM", "4096")),
-            database_url=os.environ.get(
-                "DATABASE_URL",
-                "postgresql://ruzivo:ruzivo_local_dev@127.0.0.1:5432/ruzivo",
-            ),
+            database_url=os.environ.get("DATABASE_URL", ""),
         )
 
 

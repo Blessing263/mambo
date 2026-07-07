@@ -54,11 +54,18 @@ export function AnswerText({ text }: { text: string }) {
 }
 
 /* ---------- shared actions: copy / share / print / feedback ---------- */
-export function AnswerActions({ text }: { text: string }) {
+export function AnswerActions({ text, sessionId, question }: { text: string; sessionId?: string | null; question?: string }) {
   const [fb, setFb] = useState<1 | -1 | null>(null);
   const [copied, setCopied] = useState(false);
   const copy = () => navigator.clipboard?.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1600); }).catch(() => {});
   const share = () => { if (navigator.share) navigator.share({ title: "Mambo answer", text }).catch(() => {}); else copy(); };
+  const rate = (v: 1 | -1) => {
+    const next = fb === v ? null : v;
+    setFb(next);
+    if (next && question) {
+      import("@/lib/api").then((m) => m.submitFeedback(sessionId ?? null, question, next)).catch(() => {});
+    }
+  };
   const Btn = ({ label, icon, onClick, on }: { label: string; icon: string; onClick: () => void; on?: boolean }) => (
     <button aria-label={label} onClick={onClick} className="rounded-md p-1.5 transition hover:bg-[var(--bg-hover)]"
       style={{ color: on ? (icon === "thumb_up" ? "var(--accent)" : "var(--red)") : "var(--text-tertiary)" }}>
@@ -70,8 +77,8 @@ export function AnswerActions({ text }: { text: string }) {
       <Btn label="Copy answer" icon={copied ? "check" : "content_copy"} onClick={copy} on={copied} />
       <Btn label="Share answer" icon="share" onClick={share} />
       <Btn label="Print" icon="print" onClick={() => window.print()} />
-      <Btn label="Helpful" icon="thumb_up" onClick={() => setFb(fb === 1 ? null : 1)} on={fb === 1} />
-      <Btn label="Not helpful" icon="thumb_down" onClick={() => setFb(fb === -1 ? null : -1)} on={fb === -1} />
+      <Btn label="Helpful" icon="thumb_up" onClick={() => rate(1)} on={fb === 1} />
+      <Btn label="Not helpful" icon="thumb_down" onClick={() => rate(-1)} on={fb === -1} />
     </div>
   );
 }

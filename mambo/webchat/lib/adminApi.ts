@@ -2,7 +2,6 @@
 
 import type { AdminQuery, AdminStats, ReviewedAnswer, Staff } from "./types";
 
-/** Fetch an admin endpoint with the session cookie. On 401 (elsewhere than /me) → redirect to login. */
 async function adm<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`/api/admin${path}`, { credentials: "include", cache: "no-store", ...init });
   if (res.status === 401) { window.location.href = "/admin/login"; throw new Error("unauthorized"); }
@@ -10,7 +9,6 @@ async function adm<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json();
 }
 
-/** /me is special: returns null on 401 (the layout uses it to DECIDE whether to redirect). */
 export async function getMe(): Promise<Staff | null> {
   try {
     const res = await fetch("/api/admin/me", { credentials: "include", cache: "no-store" });
@@ -26,7 +24,7 @@ export const login = (email: string, password: string) =>
   });
 export const logout = () => adm<{ ok: true }>("/logout", { method: "POST" });
 export const getStats = (days = 30) => adm<AdminStats>(`/stats?days=${days}`);
-export const getQueries = (limit = 20, offset = 0) => adm<AdminQuery[]>(`/queries?limit=${limit}&offset=${offset}`);
+export const getQueries = (limit = 20, offset = 0, q = "") => adm<AdminQuery[]>(`/queries?limit=${limit}&offset=${offset}&q=${encodeURIComponent(q)}`);
 export const getReviewed = () => adm<ReviewedAnswer[]>("/reviewed");
 export const createReviewed = (body: { question: string; answer: string; citations?: any[] }) =>
   adm<{ id: string }>("/reviewed", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });

@@ -14,7 +14,7 @@ echo "=== verifying model ==="
 curl -s "${OLLAMA_URL}/api/tags" | jq -r '.models[]? | "\(.name) \(.size)"' | grep qwen
 
 echo "=== $(date) Running bulk embed via GPU ==="
-cd /home/blessing/patriot
+cd "$(dirname "$0")/.."
 export OLLAMA_BASE_URL="${OLLAMA_URL}"
 export EMBED_MODEL="qwen3-embedding:8b"
 export EMBED_DIM="4096"
@@ -22,7 +22,7 @@ export RUZIVO_EMBED_BATCH="64"
 uv run python -m ingestion.embed_bulk
 
 echo "=== $(date) Embed complete. Verifying ==="
-psql "postgresql://ruzivo:ruzivo_local_dev@127.0.0.1:5432/ruzivo" -c \
+psql "${DATABASE_URL}" -c \
   "SELECT dim, count(*) FROM chunks WHERE embedding IS NOT NULL GROUP BY dim;"
 
 echo "=== $(date) Terminating pod ${POD_ID} ==="

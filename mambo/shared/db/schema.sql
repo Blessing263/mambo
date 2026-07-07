@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS ministries (
     contact         jsonb       NOT NULL DEFAULT '{}',-- phone/whatsapp/address/hours
     accent_color    text,                             -- per-ministry theming
     source_type     text        NOT NULL DEFAULT 'ministry',  -- ministry | adjacent
-    parent_ministry text,                               -- overseeing ministry id (adjacent sources)
+    parent_ministry text        REFERENCES ministries(id) ON DELETE SET NULL,  -- overseeing ministry id (adjacent sources)
     sort_order      int         NOT NULL DEFAULT 100,
     enabled         boolean     NOT NULL DEFAULT true,
     created_at      timestamptz NOT NULL DEFAULT now(),
@@ -104,10 +104,12 @@ CREATE TABLE IF NOT EXISTS query_log (
     citations          jsonb       NOT NULL DEFAULT '[]',
     latency_ms         int,
     feedback           smallint,                     -- +1 / -1 / null
+    token_count        int         NOT NULL DEFAULT 0, -- tokens in answer
     client_ip          varchar(45),                  -- best-effort real IP (retention-bounded)
     user_agent         varchar(500)                  -- UA string (retention-bounded)
 );
 CREATE INDEX IF NOT EXISTS idx_query_log_asked ON query_log (asked_at);
+CREATE INDEX IF NOT EXISTS idx_query_log_detected ON query_log USING GIN (detected_ministries);
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Reviewed-answer cache (Phase 2) — human-vetted answers for top questions so the
@@ -154,3 +156,24 @@ CREATE TABLE IF NOT EXISTS staff_sessions (
 );
 CREATE INDEX IF NOT EXISTS idx_staff_sessions_staff   ON staff_sessions (staff_id);
 CREATE INDEX IF NOT EXISTS idx_staff_sessions_expires ON staff_sessions (expires_at);
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- CHECK constraints (applied via ALTER so they coexist with existing data).
+-- ─────────────────────────────────────────────────────────────────────────────
+DO $$ BEGIN
+    ALTER TABLE staff ADD CONSTRAINT chk_staff_role
+        CHECK (role IN ('agent', 'supervisor'));
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+    ALTER TABLE documents ADD CONSTRAINT chk_document_status
+        CHECK (status IN ('active', 'superseded', 'removed'));
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+    ALTER TABLE query_log ADD CONSTRAINT chk_feedback
+        CHECK (feedback IN (-1, 1));
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;

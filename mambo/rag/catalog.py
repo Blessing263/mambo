@@ -10,6 +10,8 @@ from functools import lru_cache
 
 from shared.db import get_conn
 
+_ministry_map: dict[str, dict] | None = None
+
 
 @lru_cache(maxsize=1)
 def ministries() -> list[dict]:
@@ -27,8 +29,21 @@ def ministries() -> list[dict]:
 
 
 def by_id(ministry_id: str) -> dict | None:
-    return {m["id"]: m for m in ministries()}.get(ministry_id)
+    global _ministry_map
+    if _ministry_map is None:
+        _ministry_map = _build_map()
+    m = _ministry_map.get(ministry_id)
+    if m is not None:
+        return m
+    _ministry_map = _build_map()
+    return _ministry_map.get(ministry_id)
+
+
+def _build_map() -> dict[str, dict]:
+    return {m["id"]: m for m in ministries()}
 
 
 def refresh() -> None:
+    global _ministry_map
     ministries.cache_clear()
+    _ministry_map = _build_map()

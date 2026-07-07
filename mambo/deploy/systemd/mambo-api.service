@@ -1,0 +1,15 @@
+[Unit]
+Description=Mambo RAG API
+After=network.target postgresql.service ollama-ruzivo.service
+
+[Service]
+Type=simple
+User=mambo
+WorkingDirectory=/home/mambo/app
+EnvironmentFile=/home/mambo/.env
+ExecStart=/home/mambo/.local/bin/uv run uvicorn rag.api:app --host 127.0.0.1 --port 8770
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

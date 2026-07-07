@@ -34,7 +34,14 @@ _NO_THINK = {"thinking": {"type": "disabled"}}
 # Strip stale [n] citation markers from prior assistant turns so the model doesn't
 # echo source numbers that don't match the current turn's sources.
 _CITE = re.compile(r"\[\d+\]")
-HISTORY_TURNS = 6  # last 6 messages (~3 exchanges)
+HISTORY_TURNS = settings.history_turns
+
+
+def _safe_choice(resp) -> str:
+    """Extract content safely; returns '' if choices is empty (API error / refusal)."""
+    if not resp.choices:
+        return ""
+    return resp.choices[0].message.content or ""
 
 
 def _history_messages(history: list[dict] | None) -> list[dict]:
@@ -97,7 +104,7 @@ def classify_intent(question: str) -> str:
         max_tokens=200,
         extra_body=_NO_THINK,
     )
-    raw = (resp.choices[0].message.content or "").strip().lower()
+    raw = (_safe_choice(resp) or "").strip().lower()
     # The model may output "greeting." or " intent: greeting" — normalise.
     for token in ("greeting", "thanks", "capability", "question", "off_topic"):
         if token in raw:
@@ -133,7 +140,7 @@ def rewrite_query(question: str, history: list[dict] | None) -> str:
         max_tokens=400,
         extra_body=_NO_THINK,
     )
-    rewritten = (resp.choices[0].message.content or "").strip()
+    rewritten = (_safe_choice(resp) or "").strip()
     return rewritten or question
 
 
@@ -153,7 +160,7 @@ def generate(
         max_tokens=max_tokens,
         extra_body=_NO_THINK,
     )
-    return (resp.choices[0].message.content or "").strip()
+    return (_safe_choice(resp) or "").strip()
 
 
 def generate_stream(
@@ -174,6 +181,8 @@ def generate_stream(
         extra_body=_NO_THINK,
     )
     for chunk in stream:
+        if not chunk.choices:
+            continue
         delta = chunk.choices[0].delta.content
         if delta:
             yield delta

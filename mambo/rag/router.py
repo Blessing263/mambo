@@ -6,25 +6,17 @@ from the retrieved chunks).
 
 from __future__ import annotations
 
-import re
-
 from .catalog import ministries
+from .matcher import KeywordMatcher
 
 
 def _keyword_scores(question: str) -> dict[str, int]:
     q = f" {question.lower()} "
     scores: dict[str, int] = {}
     for m in ministries():
-        score = 0
-        for kw in m["keywords"]:
-            kw = kw.lower().strip()
-            if not kw:
-                continue
-            # whole-word/phrase match to avoid spurious substring hits
-            if re.search(rf"(?<![a-z]){re.escape(kw)}(?![a-z])", q):
-                score += 1
-        if score:
-            scores[m["id"]] = score
+        s = KeywordMatcher(m["keywords"]).score(q)
+        if s:
+            scores[m["id"]] = s
     return scores
 
 

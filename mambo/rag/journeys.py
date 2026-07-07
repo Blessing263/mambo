@@ -9,8 +9,9 @@ shapes structure. If no journey matches, the normal RAG answer is used unchanged
 from __future__ import annotations
 
 import json
-import re
 from pathlib import Path
+
+from .matcher import KeywordMatcher
 
 _JOURNEYS = json.loads(
     (Path(__file__).resolve().parent.parent / "registry" / "journeys.json").read_text()
@@ -27,11 +28,7 @@ def match_journey(question: str) -> dict | None:
     best: dict | None = None
     best_score = 0
     for j in _JOURNEYS:
-        score = 0
-        for kw in j.get("keywords", []):
-            kw = kw.lower().strip()
-            if kw and re.search(rf"(?<![a-z]){re.escape(kw)}(?![a-z])", q):
-                score += 1
+        score = KeywordMatcher(j.get("keywords", [])).score(q)
         if score > best_score:
             best_score = score
             best = j

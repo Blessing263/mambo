@@ -8,7 +8,6 @@ lock/bot-check that guards the citizen /ask endpoints.
 
 from __future__ import annotations
 
-import os
 import secrets
 from dataclasses import dataclass
 from urllib.parse import urlparse
@@ -17,11 +16,12 @@ import bcrypt
 from fastapi import HTTPException, Request
 from pydantic import BaseModel, EmailStr
 
+from shared.config import settings
 from shared.db import get_conn
 
 SESSION_COOKIE = "mambo_admin"
-SESSION_TTL = 12 * 3600  # 12 hours
-IS_PROD = os.environ.get("RUZIVO_ENV", "").lower() == "production"
+SESSION_TTL = settings.session_ttl
+IS_PROD = settings.is_prod
 
 
 # ── password hashing (bcrypt; avoid passlib's bcrypt>=4.1 breakage) ──────────
@@ -32,7 +32,7 @@ def hash_password(password: str) -> str:
 def verify_password(password: str, password_hash: str) -> bool:
     try:
         return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
-    except Exception:
+    except (ValueError, TypeError):
         return False
 
 
@@ -58,9 +58,11 @@ class Staff:
 
 # ── sessions ─────────────────────────────────────────────────────────────────
 def create_session(staff_id: str) -> str:
-    """Create a session row; return the opaque token (to set as a cookie)."""
+    """Create a session row; return the opaque token (to set as a cookie).
+    Invalidates all existing sessions for this staff_id to prevent session fixation."""
     token = secrets.token_urlsafe(32)
     with get_conn() as conn, conn.cursor() as cur:
+        cur.execute("DELETE FROM staff_sessions WHERE staff_id = %s;", (staff_id,))
         cur.execute(
             "INSERT INTO staff_sessions (token, staff_id, expires_at) "
             "VALUES (%s, %s, now() + make_interval(secs => %s));",

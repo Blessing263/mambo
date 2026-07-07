@@ -9,6 +9,7 @@
 
 # Local tool settings
 /.claude/
+/.playwright-mcp/
 
 # OS / editor cruft
 .DS_Store

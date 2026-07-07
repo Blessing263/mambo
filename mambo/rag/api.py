@@ -15,19 +15,20 @@ from __future__ import annotations
 
 import json
 import threading
-import time
 from contextlib import asynccontextmanager
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
-from shared.db import healthcheck
+from shared.db import get_conn, healthcheck
+from shared.config import settings
 
 from . import admin, llm, service, trust
 from .catalog import by_id, ministries
+from .sanitize import sanitize
 from .security import (
     _behavior_check,
     _bot_check,
@@ -35,57 +36,23 @@ from .security import (
     _concurrent_acquire,
     _concurrent_release,
     _generate_nonce,
-    _nonce_store,
-    _NONCE_TTL,
+    _store_nonce,
     _origin_check,
     _ratelimit_check,
-    _cleanup,
 )
+from .warmup import warmup_embeddings
 
-# Allowed origins for the app (tightened from "*")
-_ALLOWED_ORIGINS = [
-    h.strip() for h in
-    __import__("os").environ.get("RUZIVO_ALLOWED_ORIGINS",
-        "https://mambo.yttrix.tech,https://ruzivo.yttrix.tech,http://localhost:3000,http://localhost:3055"
-    ).split(",") if h.strip()
-]
-
-IS_PROD = __import__("os").environ.get("RUZIVO_ENV", "").lower() == "production"
+IS_PROD = settings.is_prod
+_ALLOWED_ORIGINS = settings.allowed_origins
 _MAX_QUESTION_LEN = 2000
 _MAX_HISTORY_TURNS = 20
-
-def _warmup_embeddings() -> None:
-    """Load the embedding model at startup AND pre-warm the query-embedding cache
-    for the most-asked demo questions (journey prompts + examples), so those answer
-    in ~2-3s instead of waiting ~13s for a fresh Qwen3-8B CPU embed. Cache hits are
-    exact (normalised lower-case), so this covers the journey tiles + example chips."""
-    demo = [
-        "How do I replace a lost national ID?",
-        "How do I apply for a passport?",
-        "How do I get a tax clearance certificate?",
-        "How do I register a birth certificate?",
-        "How do I register a business for tax?",
-        "How do I check exam results or replace a certificate?",
-        "What is the National AI Strategy?",
-        "What taxes do employers pay?",
-    ]
-    try:
-        from shared.embeddings import embed_query  # noqa: PLC0415
-        embed_query("warmup")  # load the model (~13s cold)
-        for q in demo:  # populate the lru cache for likely demo questions
-            try:
-                embed_query(q)
-            except Exception:
-                pass
-    except Exception:
-        pass
 
 
 @asynccontextmanager
 async def lifespan(_app):
-    # Warm the embedding model in the background without delaying startup.
-    threading.Thread(target=_warmup_embeddings, daemon=True).start()
+    threading.Thread(target=warmup_embeddings, daemon=True).start()
     yield
+    service._EXEC.shutdown(wait=True)
 
 
 app = FastAPI(
@@ -163,8 +130,8 @@ def list_ministries(request: Request) -> list[dict]:
 def nonce(request: Request) -> dict:
     _ratelimit_check(request, "/nonce")
     n = _generate_nonce()
-    _nonce_store[n] = time.time() + _NONCE_TTL
-    return {"nonce": n, "expires_in": _NONCE_TTL}
+    ttl = _store_nonce(n)
+    return {"nonce": n, "expires_in": ttl}
 
 
 # ── Ask (non-streaming) ────────────────────────────────────────────────────
@@ -315,6 +282,9 @@ def ask_stream(req: AskRequest, request: Request) -> StreamingResponse:
             parts: list[str] = []
             for token in llm.generate_stream(req.question, results, history=history,
                                               journey=prep.get("journey")):
+                token = sanitize(token)
+                if not token:
+                    continue
                 parts.append(token)
                 yield _sse({"type": "delta", "text": token})
             full_answer = "".join(parts)
@@ -326,9 +296,8 @@ def ask_stream(req: AskRequest, request: Request) -> StreamingResponse:
                 verify = service._web_verify_if_uncertain(
                     full_answer, req.question, answering)
                 if verify:
-                    verify = verify.lstrip("\n-* ")
-                    for token in verify:
-                        yield _sse({"type": "delta", "text": token})
+                    verify = sanitize(verify.lstrip("\n-* "))
+                    yield _sse({"type": "delta", "text": verify})
                     full_answer += verify
                 # else: the streamed RAG answer stands; the contacts safety-net
                 # below still gives the user a real escalation path — no empty reply.
@@ -348,9 +317,11 @@ def ask_stream(req: AskRequest, request: Request) -> StreamingResponse:
             })
 
             # Log after stream done — real citations now, not a placeholder [].
+            token_count = max(1, len(full_answer) // 4)
             service._log_stream(
                 req.question, req.session_id, answering,
                 {"confident": True, "citations": citations}, 0,
+                token_count=token_count,
                 client_ip=client_ip, user_agent=user_agent,
             )
 
@@ -358,6 +329,68 @@ def ask_stream(req: AskRequest, request: Request) -> StreamingResponse:
             _concurrent_release(request)
 
     return StreamingResponse(gen(), media_type="text/event-stream")
+
+
+# ── Feedback ───────────────────────────────────────────────────────────────
+
+class FeedbackIn(BaseModel):
+    session_id: str | None = None
+    question: str | None = None
+    feedback: Literal[1, -1]
+
+    @model_validator(mode="after")
+    def question_required(self):
+        if not self.question or not self.question.strip():
+            raise ValueError("question must not be empty")
+        self.question = self.question.strip()
+        return self
+
+
+@app.post("/feedback")
+def submit_feedback(body: FeedbackIn, request: Request):
+    """Submit citizen feedback (👍/👎) on a specific query_log row.
+    Matches by session_id + question text, or updates the most recent match."""
+    _ratelimit_check(request, "/feedback")
+    with get_conn() as conn, conn.cursor() as cur:
+        if body.session_id:
+            cur.execute(
+                """
+                WITH target AS (
+                    SELECT id FROM query_log
+                    WHERE session_id = %s AND question = %s AND feedback IS NULL
+                    ORDER BY asked_at DESC
+                    LIMIT 1
+                )
+                UPDATE query_log q
+                SET feedback = %s
+                FROM target
+                WHERE q.id = target.id
+                RETURNING q.id;
+                """,
+                (body.session_id, body.question, body.feedback),
+            )
+        else:
+            cur.execute(
+                """
+                WITH target AS (
+                    SELECT id FROM query_log
+                    WHERE question = %s AND feedback IS NULL
+                    ORDER BY asked_at DESC
+                    LIMIT 1
+                )
+                UPDATE query_log q
+                SET feedback = %s
+                FROM target
+                WHERE q.id = target.id
+                RETURNING q.id;
+                """,
+                (body.question, body.feedback),
+            )
+        row = cur.fetchone()
+        conn.commit()
+    if not row:
+        raise HTTPException(status_code=404, detail="No matching unanswered query found")
+    return {"ok": True}
 
 
 # ── Error handler — don't leak details ─────────────────────────────────────

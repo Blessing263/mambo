@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Chat } from "@/components/Chat";
 import { Sidebar } from "@/components/Sidebar";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Mark, Wordmark } from "@/components/Brand";
 import { HumanHandoff } from "@/components/HumanHandoff";
 import { fetchMinistries } from "@/lib/api";
@@ -71,7 +72,7 @@ export default function Home() {
               style={{ color: "var(--text-secondary)" }}
               aria-label="Toggle sidebar"
             >
-              <span className="material-symbols" style={{ fontSize: 24 }}>menu</span>
+              <span className="material-symbols" aria-hidden="true" style={{ fontSize: 24 }}>menu</span>
             </button>
 
             {/* Mobile-only: logo + title (desktop has them in the pinned sidebar) */}
@@ -94,7 +95,7 @@ export default function Home() {
               aria-label="Talk to a human"
               title="Talk to a human at the ministry"
             >
-              <span className="material-symbols" style={{ fontSize: 18 }}>support_agent</span>
+              <span className="material-symbols" aria-hidden="true" style={{ fontSize: 18 }}>support_agent</span>
               <span className="hidden sm:inline text-[12.5px] font-medium">Talk to a human</span>
             </button>
             {chatStarted && (
@@ -114,15 +115,17 @@ export default function Home() {
         {/* Full-height area below the fixed header — this scrolls internally.
             pt-[52px] compensates for the fixed bar height. */}
         <div className="flex flex-1 flex-col pt-[52px]" style={{ minHeight: "100dvh" }}>
-          <Chat
-            key={chatKey}
-            ministries={ministries}
-            ministriesLoaded={ministriesLoaded}
-            selected={selected}
-            onSelect={handleSelect}
-            chatStarted={chatStarted}
-            onChatStart={() => { setChatStarted(true); if (window.innerWidth < 1024) setSidebarOpen(false); }}
-          />
+          <ErrorBoundary>
+            <Chat
+              key={chatKey}
+              ministries={ministries}
+              ministriesLoaded={ministriesLoaded}
+              selected={selected}
+              onSelect={handleSelect}
+              chatStarted={chatStarted}
+              onChatStart={() => { setChatStarted(true); if (window.innerWidth < 1024) setSidebarOpen(false); }}
+            />
+          </ErrorBoundary>
         </div>
       </main>
     </div>

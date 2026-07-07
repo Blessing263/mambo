@@ -15,7 +15,7 @@ from shared.db import get_conn
 from shared.embeddings import embed_query
 
 # Fetch more candidates than needed so the recency re-ranker can promote newer docs.
-_OVERSAMPLE = 3
+_OVERSAMPLE = settings.retrieval_oversample
 
 _BASE_SQL = """
     SELECT c.id, c.ministry_id, c.text, c.page, c.section,

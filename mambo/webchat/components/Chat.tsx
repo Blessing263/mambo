@@ -116,14 +116,16 @@ export function Chat({ ministries, ministriesLoaded, selected, onSelect, chatSta
     <div className="flex flex-1 flex-col" style={{ minHeight: 0 }}>
       <div className="scroll-thin flex-1 overflow-y-auto">
         <div className="mx-auto w-full max-w-[44rem] px-4 py-5 sm:px-6 sm:py-8">
-          {messages.map((m) =>
+          {messages.map((m, i) =>
             m.role === "user" ? (
               <div key={m.id} className="mb-5 flex justify-end">
                 <div className="max-w-[82%] rounded-2xl rounded-br-md px-4 py-2.5 text-[15px] leading-relaxed"
                   style={{ background: "var(--bg-user-bubble)", color: "var(--text-primary)" }}>{m.text}</div>
               </div>
             ) : (
-              <div key={m.id} className="mb-5 animate-rise"><AssistantMessage m={m} byId={byId} /></div>
+              <div key={m.id} className="mb-5 animate-rise">
+                <AssistantMessage m={m} byId={byId} question={messages[i - 1]?.text} />
+              </div>
             ),
           )}
           <div ref={bottomRef} />
@@ -160,8 +162,8 @@ function Landing({
             Mambo answers in plain language using <strong style={{ color: "var(--text-primary)" }}>only retrieved source documents</strong> — with citations shown.
           </p>
           <p className="mt-3 flex items-center justify-center gap-4 text-[12px]" style={{ color: "var(--text-tertiary)" }}>
-            <span className="inline-flex items-center gap-1"><span className="material-symbols" style={{ fontSize: 14 }}>verified</span>Allow-listed sources</span>
-            <span className="inline-flex items-center gap-1"><span className="material-symbols" style={{ fontSize: 14 }}>update</span>Kept current</span>
+            <span className="inline-flex items-center gap-1"><span className="material-symbols" aria-hidden="true" style={{ fontSize: 14 }}>verified</span>Allow-listed sources</span>
+            <span className="inline-flex items-center gap-1"><span className="material-symbols" aria-hidden="true" style={{ fontSize: 14 }}>update</span>Kept current</span>
           </p>
         </div>
         <div className="mb-5"><FlagRibbon height={3} radius={2} /></div>
@@ -180,7 +182,7 @@ function Landing({
                 className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-white transition disabled:opacity-30 active:scale-[0.95]"
                 style={{ background: "var(--grad-accent)" }} aria-label="Send">
                 {busy ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-                  : <span className="material-symbols" style={{ fontSize: 20 }}>arrow_upward</span>}
+                  : <span className="material-symbols" aria-hidden="true" style={{ fontSize: 20 }}>arrow_upward</span>}
               </button>
             </div>
           </Surface>
@@ -277,7 +279,7 @@ function JourneyTile({ journey, byId, index, onPick }: {
 }
 
 /* ─── Assistant message ─── */
-function AssistantMessage({ m, byId }: { m: ChatMessage; byId: Record<string, Ministry> }) {
+function AssistantMessage({ m, byId, question }: { m: ChatMessage; byId: Record<string, Ministry>; question?: string }) {
   const meta = m.meta;
   const ministries = meta?.source_ministry ?? [];
   const accent = ministries[0] ? (byId[ministries[0]]?.accent_color || "var(--accent)") : "var(--accent)";
@@ -314,7 +316,7 @@ function AssistantMessage({ m, byId }: { m: ChatMessage; byId: Record<string, Mi
           )}
           {meta.fallback_contact?.map((c, i) => <ContactCard key={i} c={c} byId={byId} />)}
           {steps.length > 0 && <ThinkingSteps steps={steps} done={true} />}
-          {!journey && <div className="flex justify-end pt-1"><AnswerActions text={m.text} /></div>}
+          {!journey && <div className="flex justify-end pt-1"><AnswerActions text={m.text} question={question} /></div>}
         </div>
       )}
     </div>
@@ -391,7 +393,7 @@ function Composer({
             className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-white transition disabled:opacity-30 active:scale-[0.95]"
             style={{ background: "var(--grad-accent)" }} aria-label="Send">
             {busy ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-              : <span className="material-symbols" style={{ fontSize: 18 }}>arrow_upward</span>}
+                  : <span className="material-symbols" aria-hidden="true" style={{ fontSize: 18 }}>arrow_upward</span>}
           </button>
         </div>
         <div className="mt-2 flex items-center gap-2 overflow-x-auto scroll-thin px-0.5">

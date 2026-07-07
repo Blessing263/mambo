@@ -11,6 +11,20 @@ export const metadata: Metadata = {
   description:
     "Ask public-service questions in plain language. Answers are drawn from allow-listed source documents, with citations shown.",
   icons: { icon: "/favicon.svg" },
+  openGraph: {
+    type: "website",
+    title: "Mambo — Zimbabwe Public Services",
+    description:
+      "Plain-language answers to public-service questions, drawn from official source documents with citations shown.",
+    siteName: "Mambo",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Mambo — Zimbabwe Public Services",
+    description:
+      "Plain-language answers to public-service questions, drawn from official source documents with citations shown.",
+  },
+  robots: { index: true, follow: true },
 };
 
 // Set the theme before first paint to avoid a flash. Honours a saved choice, else

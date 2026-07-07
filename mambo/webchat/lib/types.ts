@@ -56,6 +56,7 @@ export interface AdminQuery {
 }
 export interface AdminStats {
   total: number; answered: number; fallback_rate: number | null; avg_feedback: number | null;
+  token_count: number; avg_latency: number | null;
   top_questions: { question: string; count: number }[];
   top_unanswered: { question: string; count: number }[];
   series: { day: string | null; count: number }[];

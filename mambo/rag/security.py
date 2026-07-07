@@ -7,6 +7,9 @@ Layers:
   4. Request logging — IP + User-Agent captured in query_log.
 
 All state is in-memory (restart clears it). For production, swap to Redis.
+
+Thread safety: all global dicts are guarded by a single re-entrant lock so
+multi-worker (thread-based) uvicorn deployments don't corrupt state.
 """
 
 from __future__ import annotations
@@ -15,28 +18,31 @@ import hashlib
 import os
 import re
 import secrets
+import threading
 import time
 from collections import defaultdict
 
 import math
-from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import Request, HTTPException
+from shared.config import settings
 
-# ── Layer 0: nonce challenge ──────────────────────────────────────────────
-#
-# The frontend fetches a short-lived nonce from GET /nonce and includes it in
-# every POST /ask( /stream) body.  Bots that talk to the API without rendering
-# the page first (e.g. raw curl scripts) won't have a valid nonce.
-#
-# Valid for 5 minutes, single-use.
+# Shared lock protecting all module-level mutable state.
+_LOCK = threading.RLock()
 
 _nonce_store: dict[str, float] = {}  # nonce → expiry_ts
-_NONCE_TTL = 300  # seconds
+_NONCE_TTL = settings.nonce_ttl
 
 
 def _generate_nonce() -> str:
     return secrets.token_urlsafe(16)
+
+
+def _store_nonce(nonce: str) -> float:
+    """Store a nonce with expiry and return its TTL. Thread-safe."""
+    with _LOCK:
+        _nonce_store[nonce] = time.time() + _NONCE_TTL
+    return _NONCE_TTL
 
 
 # ── Layer 1: rate limiting ────────────────────────────────────────────────
@@ -48,14 +54,20 @@ def _generate_nonce() -> str:
 #  /nonce       │ 10         │ 20           │
 #  /health      │ 60         │ 30           │
 
-_CONCURRENT_MAX = 5
+_CONCURRENT_MAX = settings.concurrent_streams_max
 _WINDOWS: dict[str, tuple[int, int]] = {  # seconds, max
     "/ask":        (60, 30),   # per-IP: 30 requests/minute
     "/nonce":      (10, 30),
     "/health":     (60, 60),
     "/ministries": (60, 60),
-    "/admin/login": (60, 10),  # staff login: 10/min per IP
+    "/admin/login":    (60, 10),   # staff login: 10/min per IP
+    "/admin/me":       (60, 60),
+    "/admin/stats":    (60, 20),
+    "/admin/queries":  (60, 30),
+    "/admin/reviewed-list":  (60, 30),
+    "/admin/reviewed-mutate": (60, 20),
     "/ask/stream": (60, 30),
+    "/feedback": (60, 20),
 }
 
 _hits: dict[str, list[float]] = defaultdict(list)  # ip:key → [timestamps]
@@ -89,33 +101,37 @@ def _ratelimit_check(request: Request, route_key: str, session_id: str | None = 
     window, limit = spec
     key = _ratelimit_key(request, route_key, session_id)
     now = time.monotonic()
-    _hits[key] = [t for t in _hits[key] if now - t < window]
-    if len(_hits[key]) >= limit:
-        wait = int(window - (now - _hits[key][0]) + 1)
-        raise HTTPException(
-            status_code=429,
-            detail=f"Too many requests. Retry in {wait}s.",
-            headers={"Retry-After": str(wait)},
-        )
-    _hits[key].append(now)
+    with _LOCK:
+        _hits[key] = [t for t in _hits[key] if now - t < window]
+        if len(_hits[key]) >= limit:
+            wait = int(window - (now - _hits[key][0]) + 1)
+            raise HTTPException(
+                status_code=429,
+                detail=f"Too many requests. Retry in {wait}s.",
+                headers={"Retry-After": str(wait)},
+            )
+        _hits[key].append(now)
+    _cleanup()  # opportunistic periodic cleanup (time-gated internally)
 
 
 def _concurrent_acquire(request: Request) -> None:
     """Acquire a stream slot; raise 429 if at capacity."""
     ip = _client_ip(request)
-    if _concurrent[ip] >= _CONCURRENT_MAX:
-        raise HTTPException(
-            status_code=429,
-            detail="Too many active streams. Please wait.",
-            headers={"Retry-After": "5"},
-        )
-    _concurrent[ip] += 1
+    with _LOCK:
+        if _concurrent[ip] >= _CONCURRENT_MAX:
+            raise HTTPException(
+                status_code=429,
+                detail="Too many active streams. Please wait.",
+                headers={"Retry-After": "5"},
+            )
+        _concurrent[ip] += 1
 
 
 def _concurrent_release(request: Request) -> None:
     ip = _client_ip(request)
-    if _concurrent[ip] > 0:
-        _concurrent[ip] -= 1
+    with _LOCK:
+        if _concurrent[ip] > 0:
+            _concurrent[ip] -= 1
 
 
 # ── Layer 2: bot detection ─────────────────────────────────────────────────
@@ -167,19 +183,15 @@ def _bot_check(request: Request, nonce: str | None = None, *, require_nonce: boo
     if require_nonce and not nonce:
         raise HTTPException(status_code=403, detail="Missing security token. Reload the page.")
     if nonce:
-        expiry = _nonce_store.pop(nonce, None)
+        with _LOCK:
+            expiry = _nonce_store.pop(nonce, None)
         if expiry is None or time.time() > expiry:
             raise HTTPException(status_code=403, detail="Invalid or expired security token. Reload the page.")
 
 
 # ── Layer 5: origin lock ─────────────────────────────────~~~~~~~~~~~~~~~~~
 
-_ALLOWED_ORIGINS = {
-    h.strip() for h in
-    __import__("os").environ.get("RUZIVO_ALLOWED_ORIGINS",
-        "https://mambo.yttrix.tech,https://ruzivo.yttrix.tech,http://localhost:3000,http://localhost:3055"
-    ).split(",") if h.strip()
-}
+_ALLOWED_ORIGINS = set(settings.allowed_origins)
 
 
 def _origin_check(request: Request) -> None:
@@ -210,7 +222,7 @@ def _text_entropy(text: str) -> float:
 
 # Per-session: last question timestamp → detect rapid-fire
 _session_last_question: dict[str, float] = {}  # session_id → timestamp
-_MIN_QUESTION_GAP = 0.5  # seconds — sub-500ms = likely bot
+_MIN_QUESTION_GAP = settings.min_question_gap
 
 
 def _behavior_check(session_id: str | None, question: str) -> bool:
@@ -218,18 +230,16 @@ def _behavior_check(session_id: str | None, question: str) -> bool:
     if not session_id:
         return True  # no session tracking
 
-    # 1. Sub-second cadence → flag
     now = time.time()
-    last = _session_last_question.get(session_id)
-    if last is not None and (now - last) < _MIN_QUESTION_GAP:
-        return False
-    _session_last_question[session_id] = now
+    with _LOCK:
+        last = _session_last_question.get(session_id)
+        if last is not None and (now - last) < _MIN_QUESTION_GAP:
+            return False
+        _session_last_question[session_id] = now
 
-    # 2. Very low entropy → garbage/spam
     if _text_entropy(question) < 2.0 and len(question) > 10:
         return False
 
-    # 3. Very long question (>5000 chars) → likely paste-attack
     if len(question) > 5000:
         return False
 
@@ -240,24 +250,23 @@ def _behavior_check(session_id: str | None, question: str) -> bool:
 
 # Periodic cleanup of expired nonce store and rate-limit buckets
 _LAST_CLEANUP = time.monotonic()
-_CLEANUP_INTERVAL = 300  # every 5 minutes
+_CLEANUP_INTERVAL = settings.cleanup_interval
 
 
 def _cleanup() -> None:
     global _LAST_CLEANUP
-    now = time.monotonic()
-    if now - _LAST_CLEANUP < _CLEANUP_INTERVAL:
-        return
-    _LAST_CLEANUP = now
-    # Clean nonces
-    expired = [k for k, v in _nonce_store.items() if time.time() > v]
-    for k in expired:
-        _nonce_store.pop(k, None)
-    # Clean rate-limit buckets (keep last 2 mins)
-    for key in list(_hits.keys()):
-        _hits[key] = [t for t in _hits[key] if now - t < 120]
-        if not _hits[key]:
-            del _hits[key]
+    with _LOCK:
+        now = time.monotonic()
+        if now - _LAST_CLEANUP < _CLEANUP_INTERVAL:
+            return
+        _LAST_CLEANUP = now
+        expired = [k for k, v in _nonce_store.items() if time.time() > v]
+        for k in expired:
+            _nonce_store.pop(k, None)
+        for key in list(_hits.keys()):
+            _hits[key] = [t for t in _hits[key] if now - t < 120]
+            if not _hits[key]:
+                del _hits[key]
 
 
 def security_startup() -> None:
@@ -267,7 +276,17 @@ def security_startup() -> None:
 
 def security_shutdown() -> None:
     """Called on app shutdown to clear state."""
-    _hits.clear()
-    _concurrent.clear()
-    _nonce_store.clear()
-    _session_last_question.clear()
+    with _LOCK:
+        _hits.clear()
+        _concurrent.clear()
+        _nonce_store.clear()
+        _session_last_question.clear()
+
+
+def reset_state() -> None:
+    """Clear all in-memory state — for test isolation only."""
+    with _LOCK:
+        _hits.clear()
+        _concurrent.clear()
+        _nonce_store.clear()
+        _session_last_question.clear()

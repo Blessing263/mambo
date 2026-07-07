@@ -15,7 +15,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from shared.db import get_conn
-from . import auth
+from . import auth, service
 from .auth import (SESSION_COOKIE, SESSION_TTL, IS_PROD, LoginIn, Staff,
                    current_staff, normalize_question, same_origin)
 from .security import _ratelimit_check
@@ -32,6 +32,7 @@ def _staff_dict(s: Staff) -> dict:
 @router.post("/login")
 def login(body: LoginIn, request: Request):
     _ratelimit_check(request, "/admin/login")
+    same_origin(request)
     with get_conn() as conn, conn.cursor() as cur:
         cur.execute(
             """SELECT s.id, s.ministry_id, s.email, s.name, s.role, s.password_hash,
@@ -66,36 +67,45 @@ def logout(request: Request):
 
 
 @router.get("/me")
-def me(staff: Staff = Depends(current_staff)):
+def me(request: Request, staff: Staff = Depends(current_staff)):
+    _ratelimit_check(request, "/admin/me")
     return _staff_dict(staff)
 
 
 # ── analytics + queries (ministry-scoped) ────────────────────────────────────
 @router.get("/stats")
-def stats(days: int = 30, staff: Staff = Depends(current_staff)):
+def stats(request: Request, days: int = 30, staff: Staff = Depends(current_staff)):
+    _ratelimit_check(request, "/admin/stats")
     mid = staff.ministry_id
     if not mid:
         return {"total": 0, "answered": 0, "fallback_rate": None, "avg_feedback": None,
+                "token_count": 0, "avg_latency": None,
                 "top_questions": [], "top_unanswered": [], "series": []}
-    since = f"now() - interval '{max(1, min(days, 365))} days'"
+    clamped_days = max(1, min(days, 365))
     with get_conn() as conn, conn.cursor() as cur:
-        cur.execute(f"""SELECT count(*) AS total,
+        cur.execute("""SELECT count(*) AS total,
                count(*) FILTER (WHERE confident AND answered) AS answered,
-               avg(feedback) FILTER (WHERE feedback IS NOT NULL) AS avg_feedback
-               FROM query_log WHERE %s = ANY(detected_ministries) AND asked_at > {since};""", (mid,))
+               avg(feedback) FILTER (WHERE feedback IS NOT NULL) AS avg_feedback,
+               coalesce(sum(token_count), 0) AS token_count,
+               coalesce(round(avg(latency_ms) FILTER (WHERE latency_ms > 0)), 0) AS avg_latency
+               FROM query_log WHERE %s = ANY(detected_ministries)
+               AND asked_at > now() - make_interval(days => %s);""", (mid, clamped_days))
         agg = cur.fetchone()
-        cur.execute(f"""SELECT question, count(*) AS n FROM query_log
-               WHERE %s = ANY(detected_ministries) AND asked_at > {since}
-               GROUP BY question ORDER BY n DESC LIMIT 10;""", (mid,))
+        cur.execute("""SELECT question, count(*) AS n FROM query_log
+               WHERE %s = ANY(detected_ministries)
+               AND asked_at > now() - make_interval(days => %s)
+               GROUP BY question ORDER BY n DESC LIMIT 10;""", (mid, clamped_days))
         top_q = cur.fetchall()
-        cur.execute(f"""SELECT question, count(*) AS n FROM query_log
-               WHERE %s = ANY(detected_ministries) AND asked_at > {since}
+        cur.execute("""SELECT question, count(*) AS n FROM query_log
+               WHERE %s = ANY(detected_ministries)
+               AND asked_at > now() - make_interval(days => %s)
                  AND NOT (confident AND answered)
-               GROUP BY question ORDER BY n DESC LIMIT 10;""", (mid,))
+               GROUP BY question ORDER BY n DESC LIMIT 10;""", (mid, clamped_days))
         top_u = cur.fetchall()
-        cur.execute(f"""SELECT date_trunc('day', asked_at) AS d, count(*) AS n FROM query_log
-               WHERE %s = ANY(detected_ministries) AND asked_at > {since}
-               GROUP BY d ORDER BY d;""", (mid,))
+        cur.execute("""SELECT date_trunc('day', asked_at) AS d, count(*) AS n FROM query_log
+               WHERE %s = ANY(detected_ministries)
+               AND asked_at > now() - make_interval(days => %s)
+               GROUP BY d ORDER BY d;""", (mid, clamped_days))
         series = cur.fetchall()
     total, answered = agg["total"], agg["answered"]
     return {
@@ -103,6 +113,8 @@ def stats(days: int = 30, staff: Staff = Depends(current_staff)):
         "answered": answered,
         "fallback_rate": round((total - answered) / total, 3) if total else None,
         "avg_feedback": round(float(agg["avg_feedback"]), 2) if agg["avg_feedback"] is not None else None,
+        "token_count": int(agg["token_count"]),
+        "avg_latency": int(agg["avg_latency"]) if agg["avg_latency"] else None,
         "top_questions": [{"question": r["question"], "count": r["n"]} for r in top_q],
         "top_unanswered": [{"question": r["question"], "count": r["n"]} for r in top_u],
         "series": [{"day": r["d"].isoformat() if r["d"] else None, "count": r["n"]} for r in series],
@@ -110,18 +122,29 @@ def stats(days: int = 30, staff: Staff = Depends(current_staff)):
 
 
 @router.get("/queries")
-def queries(limit: int = 50, offset: int = 0, staff: Staff = Depends(current_staff)):
+def queries(request: Request, limit: int = 50, offset: int = 0, q: str = "", staff: Staff = Depends(current_staff)):
+    _ratelimit_check(request, "/admin/queries")
     mid = staff.ministry_id
     if not mid:
         return []
     with get_conn() as conn, conn.cursor() as cur:
-        cur.execute(
-            """SELECT asked_at, question, detected_ministries, confident, answered,
-                      feedback, latency_ms
-               FROM query_log WHERE %s = ANY(detected_ministries)
-               ORDER BY asked_at DESC LIMIT %s OFFSET %s;""",
-            (mid, max(1, min(limit, 200)), max(0, offset)),
-        )
+        if q.strip():
+            cur.execute(
+                """SELECT asked_at, question, detected_ministries, confident, answered,
+                          feedback, latency_ms
+                   FROM query_log WHERE %s = ANY(detected_ministries)
+                     AND question ILIKE %s
+                   ORDER BY asked_at DESC LIMIT %s OFFSET %s;""",
+                (mid, f"%{q.strip()}%", max(1, min(limit, 200)), max(0, offset)),
+            )
+        else:
+            cur.execute(
+                """SELECT asked_at, question, detected_ministries, confident, answered,
+                          feedback, latency_ms
+                   FROM query_log WHERE %s = ANY(detected_ministries)
+                   ORDER BY asked_at DESC LIMIT %s OFFSET %s;""",
+                (mid, max(1, min(limit, 200)), max(0, offset)),
+            )
         rows = cur.fetchall()
     return [{"asked_at": r["asked_at"].isoformat() if r["asked_at"] else None,
              "question": r["question"], "confident": r["confident"], "answered": r["answered"],
@@ -144,14 +167,16 @@ class ReviewedUpdate(BaseModel):
 
 
 @router.get("/reviewed")
-def list_reviewed(staff: Staff = Depends(current_staff)):
+def list_reviewed(request: Request, limit: int = 100, offset: int = 0, staff: Staff = Depends(current_staff)):
+    _ratelimit_check(request, "/admin/reviewed-list")
     if not staff.ministry_id:
         return []
     with get_conn() as conn, conn.cursor() as cur:
         cur.execute(
             """SELECT id, question, answer, citations, enabled, updated_at
-               FROM reviewed_answers WHERE ministry_id = %s ORDER BY updated_at DESC;""",
-            (staff.ministry_id,),
+               FROM reviewed_answers WHERE ministry_id = %s ORDER BY updated_at DESC
+               LIMIT %s OFFSET %s;""",
+            (staff.ministry_id, max(1, min(limit, 500)), max(0, offset)),
         )
         rows = cur.fetchall()
     return [{"id": str(r["id"]), "question": r["question"], "answer": r["answer"],
@@ -161,6 +186,7 @@ def list_reviewed(staff: Staff = Depends(current_staff)):
 
 @router.post("/reviewed")
 def create_reviewed(body: ReviewedIn, request: Request, staff: Staff = Depends(current_staff)):
+    _ratelimit_check(request, "/admin/reviewed-mutate")
     same_origin(request)
     if not staff.ministry_id:
         raise HTTPException(status_code=403, detail="No ministry assigned")
@@ -173,11 +199,13 @@ def create_reviewed(body: ReviewedIn, request: Request, staff: Staff = Depends(c
         )
         r = cur.fetchone()
         conn.commit()
+    service.invalidate_reviewed_cache()
     return {"id": str(r["id"]), "updated_at": r["updated_at"].isoformat() if r["updated_at"] else None}
 
 
 @router.put("/reviewed/{rid}")
 def update_reviewed(rid: str, body: ReviewedUpdate, request: Request, staff: Staff = Depends(current_staff)):
+    _ratelimit_check(request, "/admin/reviewed-mutate")
     same_origin(request)
     if not staff.ministry_id:
         raise HTTPException(status_code=403, detail="No ministry assigned")
@@ -205,11 +233,13 @@ def update_reviewed(rid: str, body: ReviewedUpdate, request: Request, staff: Sta
         conn.commit()
     if not r:
         raise HTTPException(status_code=404, detail="Not found (or not in your ministry)")
+    service.invalidate_reviewed_cache()
     return {"ok": True}
 
 
 @router.delete("/reviewed/{rid}")
 def delete_reviewed(rid: str, request: Request, staff: Staff = Depends(current_staff)):
+    _ratelimit_check(request, "/admin/reviewed-mutate")
     same_origin(request)
     if not staff.ministry_id:
         raise HTTPException(status_code=403, detail="No ministry assigned")
@@ -222,4 +252,5 @@ def delete_reviewed(rid: str, request: Request, staff: Staff = Depends(current_s
         conn.commit()
     if not r:
         raise HTTPException(status_code=404, detail="Not found (or not in your ministry)")
+    service.invalidate_reviewed_cache()
     return {"ok": True}

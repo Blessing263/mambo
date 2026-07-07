@@ -1,0 +1,15 @@
+[Unit]
+Description=Mambo Webchat (Next.js)
+After=network.target
+
+[Service]
+Type=simple
+User=mambo
+WorkingDirectory=/home/mambo/app/webchat
+EnvironmentFile=/home/mambo/.env
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -92,21 +92,26 @@ def store_document(
 
         # Replace chunks wholesale to avoid stale content on re-ingest.
         cur.execute("DELETE FROM chunks WHERE document_id = %s;", (document_id,))
+        dim = None
+        rows = []
         for ch, vec in zip(chunks, vectors):
             content_h = sha256(ch["text"].encode("utf-8"))
             embedding = vec if vec.size > 0 else None
-            cur.execute(
-                """
-                INSERT INTO chunks
-                    (document_id, ministry_id, chunk_index, text, page, section,
-                     token_count, embedding, content_hash, dim)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
-                """,
-                (
-                    document_id, ministry_id, ch["chunk_index"], ch["text"],
-                    ch.get("page"), ch.get("section"), len(ch["text"]) // 4,
-                    embedding, content_h, 4096 if embedding is not None else None,
-                ),
-            )
+            if embedding is not None and dim is None:
+                dim = len(embedding)
+            rows.append((
+                document_id, ministry_id, ch["chunk_index"], ch["text"],
+                ch.get("page"), ch.get("section"), len(ch["text"]) // 4,
+                embedding, content_h, None if embedding is None else dim or 4096,
+            ))
+        cur.executemany(
+            """
+            INSERT INTO chunks
+                (document_id, ministry_id, chunk_index, text, page, section,
+                 token_count, embedding, content_hash, dim)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+            """,
+            rows,
+        )
         conn.commit()
     return str(document_id), len(chunks)
