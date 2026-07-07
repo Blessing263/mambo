@@ -1,5 +1,5 @@
 id,risk,likelihood,impact,movement,mitigation,owner
-R01,"Hallucination / unsupported claims in answers",Medium,High,→ reducing,"Trust layer: confidence threshold (0.45), mandatory [n] citations, official-sources-only corpus, evidence-status badge, per-section 'not specified' in journeys, abstention guard. Manual eval + future reviewed-answer cache.",Team Mambo
+R01,"Hallucination / unsupported claims in answers",Medium,High,→ reducing,"Trust layer: confidence threshold (0.45), mandatory [n] citations, allow-listed source corpus, evidence-status badge, per-section 'not specified' in journeys, abstention guard. Manual eval + future reviewed-answer cache.",Team Mambo
 R02,"Outdated official documents returned",Medium,Medium,→ reducing,"Incremental refresh keyed on content_hash; recency boost promotes the newest version of amended docs; 'Sources last updated' signal. Quarterly re-crawl cadence.",Team Mambo
 R03,"Uneven corpus coverage (education/zimlii thin)",High,Medium,→ reducing,"Disclosed in data quality report; re-crawl education + expand ZimLII judgment pipeline; coverage report per ministry.",Team Mambo
 R04,"High latency / cost on local hosting",High,Medium,→ reducing,"CCE / GPU self-host roadmap; query-embedding cache; batch embeddings; swappable generation model. p95 latency target post-CCE.",Team Mambo

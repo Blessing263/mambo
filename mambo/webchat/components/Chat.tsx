@@ -157,10 +157,10 @@ function Landing({
             What do you need to do today?
           </h1>
           <p className="mt-3 text-[15px] leading-relaxed max-w-lg mx-auto" style={{ color: "var(--text-secondary)" }}>
-            Mambo answers in plain language, using <strong style={{ color: "var(--text-primary)" }}>only official government documents</strong> — with the source always shown.
+            Mambo answers in plain language using <strong style={{ color: "var(--text-primary)" }}>only retrieved source documents</strong> — with citations shown.
           </p>
           <p className="mt-3 flex items-center justify-center gap-4 text-[12px]" style={{ color: "var(--text-tertiary)" }}>
-            <span className="inline-flex items-center gap-1"><span className="material-symbols" style={{ fontSize: 14 }}>verified</span>Official sources only</span>
+            <span className="inline-flex items-center gap-1"><span className="material-symbols" style={{ fontSize: 14 }}>verified</span>Allow-listed sources</span>
             <span className="inline-flex items-center gap-1"><span className="material-symbols" style={{ fontSize: 14 }}>update</span>Kept current</span>
           </p>
         </div>

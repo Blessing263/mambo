@@ -7,7 +7,7 @@ without developer help.
 ## 1. Source approval
 
 - Confirm the ministry's **official domains** and add them to the registry
-  `domains` allow-list (the crawler and the "official-sources-only" claim depend on it).
+  `domains` allow-list (the crawler and the allow-listed-source claim depend on it).
 - Confirm the **seed URLs** (homepage + known publication pages) and any curated
   `doc_pages`.
 - Record the source type (`ministry`) and, for adjacent bodies, `source_type:

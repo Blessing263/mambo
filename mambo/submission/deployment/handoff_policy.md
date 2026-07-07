@@ -1,6 +1,6 @@
 # Ministry Handoff Policy
 
-**What:** When Mambo cannot answer a question from the official corpus — or the
+**What:** When Mambo cannot answer a question from the allow-listed corpus — or the
 question is outside its scope — it does not guess. It hands the citizen off to the
 right ministry with a structured escalation card. Inspired by Estonia's Bürokratt,
 where a public assistant's job includes directing the user to a human/office when
@@ -10,7 +10,7 @@ it cannot help.
 
 A handoff card (`fallback_contact`) is attached whenever the answer's evidence
 status is **unsupported** (retrieval below the confidence threshold — no reliable
-official source) or **declined** (medical/legal/personal/political/prompt-injection
+source in the corpus) or **declined** (medical/legal/personal/political/prompt-injection
 abstention). The card names the responsible ministry (or ministries) and gives a
 real path forward.
 
@@ -20,8 +20,8 @@ For each responsible ministry, derived from the registry (`registry/ministries.j
 enriched at load time by `registry/load_registry.py::_handoff_contact`):
 
 - **Ministry** short name
-- **Phone / WhatsApp / Email / Address / Office hours** (curated, official)
-- **Service portal / counter** link (the ministry's official site)
+- **Phone / WhatsApp / Email / Address / Office hours** (curated from source records)
+- **Service portal / counter** link (where available)
 - **Last verified** date (when the contact was last confirmed against the source)
 - **Review owner** (named steward; to be assigned per ministry during onboarding)
 
@@ -38,8 +38,8 @@ enriched at load time by `registry/load_registry.py::_handoff_contact`):
 
 ## Review cadence
 
-- Contacts are re-verified against each source at least **quarterly**, and whenever
-  a source's homepage changes.
+- Operational target: contacts are re-verified against each source at least
+  **quarterly**, and whenever a source's homepage changes.
 - `validate_corpus.py` and `check_citation_links.py` flag broken source links; a
   broken source link triggers a contact re-check for that ministry.
 - A ministry is not marked `enabled` until its handoff contact is confirmed.

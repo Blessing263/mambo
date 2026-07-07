@@ -1,13 +1,14 @@
 # Mambo — National redesign (live-demo frontend)
 
-A reimagined, **national-grade** frontend for **Mambo** — the Government of Zimbabwe's
-plain-language, citizen-facing information assistant. Built for the live pitch to the
-Minister: dignified, unmistakably Zimbabwean, and dramatic on a projector.
+A reimagined frontend for **Mambo** — a plain-language, citizen-facing assistant
+for Zimbabwe public-service information. Built for a live product pitch: dignified,
+unmistakably Zimbabwean, and clear on a projector.
 
-> *Mambo* means **"knowledge"** in Shona. One assistant across every ministry; answers
-> drawn **only** from official documents, with the source shown every time.
+> *Mambo* means **"king"** in Shona; here it is framed as the **king of
+> information**. The prototype covers multiple ministries and adjacent sources, and
+> answers are drawn only from retrieved source documents with citations shown.
 
-Source project: **github.com/Blessing263/ruzivo** (`webchat/` = the Next.js face,
+Source project: **github.com/Blessing263/mambo** (`webchat/` = the Next.js face,
 `rag/` = the brain, `ingestion/` + `registry/` = the data pipeline). This redesign is a
 drop-in re-skin of `webchat/` — same data contracts, new identity.
 
@@ -30,7 +31,7 @@ runs from a file or any static host.
    at 96% match, then drops the steps + contact into the chat. *The flagship.*
 4. Toggle **light/dark** any time (top bar or sidebar).
 
-All answers are **scripted** for a flawless demo (no live RAG backend needed). The wiring
+All answers are **scripted** for a deterministic demo (no live RAG backend needed). The wiring
 matches the real API response shape, so swapping in the live `askStream` is a one-file change.
 
 ---
@@ -72,7 +73,7 @@ documents…" typing dots, and a routing "radar" sweep. Nothing bouncy; everythi
 
 ## File map
 ```
-ruzivo-redesign/
+mambo-redesign/
 ├── index.html      ← the app (load order: data → emblem → answer → sidebar → chat → router → app)
 ├── mobile.html     ← iPhone-framed mobile showcase
 ├── theme.css       ← national identity tokens (light + dark)

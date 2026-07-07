@@ -7,9 +7,9 @@ const spectral = Spectral({ subsets: ["latin"], weight: ["500", "600", "700"], v
 const hanken = Hanken_Grotesk({ subsets: ["latin"], variable: "--font-hanken", display: "swap" });
 
 export const metadata: Metadata = {
-  title: "Mambo — Government of Zimbabwe",
+  title: "Mambo — Zimbabwe Public Services",
   description:
-    "Ask the Government of Zimbabwe anything. Plain-language answers drawn only from official ministry documents, with the source always shown.",
+    "Ask public-service questions in plain language. Answers are drawn from allow-listed source documents, with citations shown.",
   icons: { icon: "/favicon.svg" },
 };
 

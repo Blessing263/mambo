@@ -1,21 +1,21 @@
 # Mambo 🇿🇼
 
-**A plain-language, citizen-facing information assistant for the Government of Zimbabwe.**
+**A plain-language, citizen-facing information assistant for Zimbabwe public services.**
 
-Ask a question in everyday words and get a clear answer drawn **only** from official
-government documents — with the source always shown. Live demo:
+Ask a question in everyday words and get a clear answer drawn from the allow-listed
+public-service corpus — with the source always shown. Live demo:
 **https://mambo.yttrix.tech**
 
-*Mambo* means "knowledge" in Shona.
+*Mambo* means "king" in Shona; here it is framed as the **king of information**.
 
 ---
 
 ## What it does
 
-- **Whole-of-government**: one assistant across multiple ministries and official bodies
+- **Whole-of-government-ready**: one assistant across multiple ministries and official bodies
   (ICT, Health, Home Affairs, Finance, Education) plus adjacent legal/tax sources
   (Veritas — Acts & Statutory Instruments, ZIMRA — tax, ZIMSEC — exams).
-- **Grounded & cited**: answers come only from retrieved official documents, with a
+- **Grounded & cited**: answers come only from retrieved source documents, with a
   clickable source on every reply. When the documents don't cover something, it says
   so honestly and points to the ministry's contact details.
 - **Smart routing** ("find the right office"): figures out which ministry/agency a

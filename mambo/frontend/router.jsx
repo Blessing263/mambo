@@ -51,7 +51,7 @@ function RouterModal({ open, onClose, onRoute }) {
             <span className="rt-head-icon"><Ico n="account_tree" fill style={{ fontSize: 22, color: "var(--gold)" }} /></span>
             <div>
               <div className="rt-title">Find the right office</div>
-              <div className="rt-sub">Describe your situation — Ruzivo finds the exact ministry and department.</div>
+              <div className="rt-sub">Describe your situation — Mambo finds the relevant covered ministry or source.</div>
             </div>
           </div>
 
@@ -220,7 +220,7 @@ function RoutingMessage({ m }) {
     <div className="asst fade-up">
       <div className="asst-head">
         <Mark size={26} radius={8} />
-        <span className="asst-name" style={{ fontFamily: "var(--font-display)" }}>Ruzivo</span>
+        <span className="asst-name" style={{ fontFamily: "var(--font-display)" }}>Mambo</span>
         <span className="route-tag"><Ico n="account_tree" style={{ fontSize: 13 }} />Routed</span>
         <MinistryBadge id={data.routed} />
       </div>

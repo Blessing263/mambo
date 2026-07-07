@@ -17,7 +17,7 @@ removing per-query API cost, improving latency, and keeping data in-country.
 ## Compute requirements (estimate — to confirm with ZCHPC)
 
 - **Embedding bulk job:** 1× GPU (e.g. A100/L4 class) for a few minutes per full
-  corpus re-embed (3,059 chunks ≈ seconds-to-minutes); or CPU for incremental.
+  corpus re-embed (2,901 chunks, expected seconds-to-minutes on GPU); or CPU for incremental.
 - **Self-hosted generation:** 1–2× GPU sized to the chosen open-weight model and
   target p95 latency; or CPU-only for low concurrency.
 - **Postgres+pgvector:** CPU + RAM + SSD; exact sizing depends on corpus growth.

@@ -8,9 +8,9 @@
 | Metric | Value |
 |---|---|
 | Enabled sources | 9 (5 ministries + 4 adjacent) |
-| Documents | 903 |
-| Chunks | 3,059 |
-| Embeddings complete | 99.97% (3,058/3,059; 1 pending) |
+| Documents | 890 |
+| Chunks | 2,901 |
+| Embeddings complete | 99.97% (2,900/2,901; 1 pending) |
 | Documents using OCR | 8 |
 | Duplicate source URLs | 0 |
 | Orphan chunks | 0 |
@@ -38,9 +38,9 @@ Chunk coverage is uneven across sources:
 | finance | 490 | |
 | ict | 465 | |
 | veritas | 393 | |
-| home_affairs | 342 | |
-| zimsec | 307 | |
+| zimsec | 309 | |
 | health | 201 | |
+| home_affairs | 182 | |
 | **education** | **3** | **thin — site yielded little extractable text; needs re-crawl** |
 | **zimlii** | **1** | **very thin — judgment ingest is a separate pipeline; needs expansion** |
 

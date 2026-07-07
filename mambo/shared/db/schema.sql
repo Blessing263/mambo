@@ -1,4 +1,4 @@
--- Ruzivo — Knowledge Store schema (Postgres 16 + pgvector)
+-- Mambo — Knowledge Store schema (Postgres 16 + pgvector)
 -- The seam between Ingestion (writes) and RAG (reads). Every chunk is tagged by
 -- ministry for routing, and carries full provenance so every citation is verifiable.
 --
@@ -111,8 +111,8 @@ CREATE INDEX IF NOT EXISTS idx_query_log_asked ON query_log (asked_at);
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Reviewed-answer cache (Phase 2) — human-vetted answers for top questions so the
--- most-seen replies per ministry are guaranteed perfect. Present now for forward
--- compatibility; unused until curated.
+-- most-seen replies per ministry can be reviewed and served consistently. Present
+-- now for forward compatibility; unused until curated.
 -- ─────────────────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS reviewed_answers (
     id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),

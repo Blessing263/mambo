@@ -2,9 +2,10 @@
 
 ## Overview
 
-Mambo is a retrieval-augmented citizen information assistant for the Government of
-Zimbabwe. It answers plain-language questions using **only** an allow-listed corpus
-of official documents, with inline citations, an honest evidence-status badge on
+Mambo is a retrieval-augmented citizen information assistant for Zimbabwe
+public-service information. It answers plain-language questions using **only** the
+retrieved documents from an allow-listed corpus of ministry, agency, tax,
+education, and public legal sources, with inline citations, an honest evidence-status badge on
 every answer, structured service-journey cards, and a handoff card when it cannot
 answer.
 
@@ -34,8 +35,8 @@ process payments, authenticate users, or access case-specific records.
 
 ## Data
 
-- **Corpus:** 903 official documents / 3,059 chunks from 9 allow-listed official
-  sources (5 ministries + ZIMRA, ZIMSEC, Veritas, ZimLII). Provenance (source URL,
+- **Corpus:** 890 documents / 2,901 chunks from 9 allow-listed sources
+  (5 ministries + ZIMRA, ZIMSEC, Veritas, ZimLII). Provenance (source URL,
   page, fetch date, content hash, raw path) stored per chunk.
 - **Queries:** logged for analytics/quality under a minimisation policy
   (retention-bounded `client_ip`/`user_agent`; no solicited personal data).

@@ -47,15 +47,15 @@ function Landing({ selected, onSelect, onSend, busy }) {
         </div>
         <div className="kicker">
           <span className="flag-ribbon" style={{ width: 26, height: 3, borderRadius: 9 }} />
-          Government of Zimbabwe
+          Zimbabwe Public Services
           <span className="flag-ribbon" style={{ width: 26, height: 3, borderRadius: 9 }} />
         </div>
         <h1 className="hero-h1">
           Ask the Government,<br /><span className="hero-em">get a clear answer.</span>
         </h1>
         <p className="hero-sub">
-          Ruzivo answers in plain language using <strong>only official ministry documents</strong> —
-          and shows you the source, every time. Free, day and night, on any device.
+          Mambo answers in plain language using <strong>only retrieved source documents</strong> —
+          and shows citations. Free, day and night, on any device.
         </p>
         <div className="ask-wrap">
           <div className="ask-box">
@@ -165,7 +165,7 @@ function AssistantMessage({ m }) {
     <div className="asst fade-up">
       <div className="asst-head">
         <Mark size={26} radius={8} />
-        <span className="asst-name">Ruzivo</span>
+        <span className="asst-name">Mambo</span>
         {ministries.map((id) => <MinistryBadge key={id} id={id} />)}
       </div>
 

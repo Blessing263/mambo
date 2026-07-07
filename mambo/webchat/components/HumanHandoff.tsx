@@ -7,7 +7,7 @@ import { ContactCard } from "./AnswerBlocks";
 import { FlagRibbon } from "./Brand";
 
 /* "Talk to a human" — the per-ministry human handover flow.
-   Every ministry's verified contact (from the official registry, served by
+   Registry contacts (served by
    /api/ministries) is one tap away at any time — not only when an answer
    falls back. Pick a ministry, get the actionable contact card. */
 export function HumanHandoff({
@@ -72,11 +72,11 @@ export function HumanHandoff({
             <div className="space-y-2">
               {hasContact && c ? <ContactCard c={c} byId={byId} /> : (
                 <p className="text-[13px] rounded-xl px-3 py-2.5 m-0" style={{ color: "var(--text-secondary)", background: "var(--bg-secondary)" }}>
-                  No verified contact on record yet for {m.short_name} — try the ministry&apos;s official website.
+                  No contact on record yet for {m.short_name} — try the ministry&apos;s official website.
                 </p>
               )}
               <p className="text-[11px] px-1 m-0" style={{ color: "var(--text-tertiary)" }}>
-                Contacts come from the official registry — never guessed — and are re-verified quarterly.
+                Contacts come from the official registry — never guessed — and should be re-verified quarterly.
               </p>
             </div>
           ) : ministries.length === 0 ? (

@@ -30,7 +30,7 @@ function Sidebar({ open, selected, onSelect, onClose, theme, onToggleTheme, onNe
                 <Wordmark size={20} />
                 <div style={{ fontSize: 10.5, letterSpacing: "0.14em", textTransform: "uppercase",
                   color: "var(--ink-faint)", marginTop: 3, fontWeight: 600 }}>
-                  Government of Zimbabwe
+                  Zimbabwe Public Services
                 </div>
               </div>
             </div>
@@ -75,7 +75,7 @@ function Sidebar({ open, selected, onSelect, onClose, theme, onToggleTheme, onNe
 
             <div className="trust-strip">
               <Ico n="verified_user" fill style={{ fontSize: 16, color: "var(--gold)" }} />
-              <span>Answers from <strong style={{ color: "var(--ink-soft)", fontWeight: 600 }}>official documents only</strong></span>
+              <span>Answers from <strong style={{ color: "var(--ink-soft)", fontWeight: 600 }}>retrieved sources only</strong></span>
             </div>
           </div>
         </div>

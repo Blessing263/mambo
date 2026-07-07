@@ -127,7 +127,7 @@ export function Sidebar({
                 verified
               </span>
               <span className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>
-                Answers from official documents only
+                Answers from retrieved sources only
               </span>
             </div>
           </div>

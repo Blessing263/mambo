@@ -1,14 +1,15 @@
 # Mambo 🇿🇼
 
-**A whole-of-government, plain-language citizen information assistant for Zimbabwe.**
+**A whole-of-government-ready, plain-language citizen information assistant for Zimbabwe public services.**
 
-Ask a question in everyday words and get a clear answer drawn **only** from official
-government documents — with the source always cited. Submitted to the POTRAZ
+Ask a question in everyday words and get a clear answer drawn from the allow-listed
+public-service corpus — with the source always cited. Submitted to the POTRAZ
 **AI for Impact Challenge (AI4I 2026), Track 3 — Development**.
 
-> *Mambo* (Shona: "matters / affairs") handles the public's business: it routes a
-> question to the right ministry, answers from that ministry's official documents,
-> names the source, and hands you to the right office when the documents don't cover it.
+> *Mambo* means "king" in Shona; here it is framed as the **king of information**:
+> it routes a question to the right covered source, answers from retrieved
+> public-service documents, names the source, and hands you to the right office
+> when the corpus doesn't cover it.
 
 ## Where things are
 
@@ -30,8 +31,8 @@ Start with **[`mambo/FOUNDATION.md`](mambo/FOUNDATION.md)** (architecture & deci
 
 ## What makes it trustworthy
 
-- **Official-sources-only** — retrieval from an allow-listed official corpus; the web
-  verifier is off by default, so the claim is true.
+- **Allow-listed-source-only** — retrieval from a curated corpus of ministry,
+  agency, and public legal sources; the web verifier is off by default.
 - **Cited** — every factual claim carries an inline `[n]` citation to its source.
 - **Honest evidence status** — every answer is badged *answered / partial /
   unsupported / declined*; it never guesses.

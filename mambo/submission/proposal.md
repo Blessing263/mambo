@@ -13,7 +13,7 @@ project_id: "mambo"
 
 **Track:** Development — AI for Impact Challenge (AI4I 2026)
 
-**Project Title:** Mambo — a whole-of-government citizen information assistant
+**Project Title:** Mambo — a whole-of-government-ready citizen information assistant
 
 **Team Name:** Team Mambo
 
@@ -44,19 +44,23 @@ need consistent, cited, first-line answers. A mobile-first, free, always-on
 assistant reaches the widest audience.
 
 **What Mambo is.** A retrieval-augmented assistant that answers in plain language
-using **only** an allow-listed corpus of official documents, with a citation on
-every claim, an honest **evidence-status badge** on every answer, structured
+using **only** the retrieved documents from an allow-listed corpus of ministry,
+agency, tax, education, and public legal sources, with citations, an honest
+**evidence-status badge** on every answer, structured
 **service-journey cards** for common tasks, and a **ministry handoff card** when it
-cannot answer. *Mambo* is a Shona word for "matters / affairs" — fitting for a
-service that handles the public's business.
+cannot answer. *Mambo* is a Shona word for "king"; here it is framed as the
+**king of information**.
 
 **Strategic alignment.** Mambo implements the National AI Strategy's goals for
 inclusive, trustworthy public-service AI built on local capability and digital
-sovereignty: official-source grounding with citations (trustworthy); abstention and
+sovereignty: allow-listed-source grounding with citations (trustworthy); abstention and
 honest status (responsible); mobile-first free access (inclusive); a self-hostable
-open-source stack with a CCE roadmap (sovereign, local). It is whole-of-government
-— one brain, many ministries — led by ICT and designed so every ministry plugs in
-via a curated registry. Each ministry also gets its own **customer-service portal** to see what citizens ask, curate vetted answers, and handle handoffs.
+open-source stack with a CCE roadmap (sovereign, local). It is
+whole-of-government-ready: led from the ICT use case, currently covering 5
+ministries plus 4 adjacent sources, and designed so additional ministries plug in
+via a curated registry. The product includes a **customer-service portal** for
+covered ministries to see what citizens ask, curate vetted answers, and handle
+handoffs.
 
 # 2. Technical Design & Product Logic
 
@@ -84,8 +88,9 @@ generate or fall back → trust layer`. The safety guard abstains before retriev
 | Retrieval | Ministry-scoped cosine + recency boost | Newest version of an amended law wins |
 | Webchat | Next.js 14, streaming SSE, mobile-first | Low-bandwidth, always-on |
 
-**Data.** 889 official documents / 2,901 chunks from 9+ official sources
-(5 ministries + ZIMRA, ZIMSEC, Veritas, ZimLII, + embassy/consulate procedure pages).
+**Data.** 890 documents / 2,901 chunks from 9 enabled sources
+(5 ministries + ZIMRA, ZIMSEC, Veritas, ZimLII; selected embassy/consulate pages are
+included under Home Affairs where listed in the registry allow-list).
 Every chunk stores source URL,
 page, fetch date, content hash and raw path — so every citation is verifiable.
 
@@ -100,8 +105,8 @@ ground generation in them. We do not apply AI where a rule would do.
 partial / unsupported / declined); a deterministic **abstention guard** (medical,
 legal, personal-data, political, prompt-injection); **service-journey cards** for
 six common tasks; **ministry handoff cards** plus a persistent **"Talk to a human"**
-flow — every ministry's verified contact (call / WhatsApp / email / office hours)
-one tap away at any time, not only when an answer falls back; switching ministry
+flow — covered-source contacts (call / WhatsApp / email / office hours, where
+available in the registry) one tap away at any time, not only when an answer falls back; switching ministry
 focus starts a **fresh conversation** (no cross-ministry context bleed);
 **live "thinking" steps** that narrate the retrieval; streaming; mobile-first; light/dark themes; a **designed national
 identity** (Spectral/Hanken typography, flag-palette tokens, a Seal/Mark/Wordmark);
@@ -120,8 +125,8 @@ short-circuit.
 | Dangerous-case abstention | 7 / 7 handled correctly |
 | Corpus integrity checks | 8 / 8 pass |
 | Citation link liveness (sample) | 8 / 8 resolved |
-| "Official-sources-only" claim | True (web verifier off by default) |
-| Reviewed-answer latency | <1 s (instant, zero LLM) — curated by ministry staff |
+| Allow-listed-source-only retrieval | True (web verifier off by default) |
+| Reviewed-answer latency | <1 s in the reviewed-answer path (zero LLM call) |
 
 Honest gaps are disclosed, not hidden: education (3 chunks) and ZimLII (1) are
 thin; Shona/Ndebele router accuracy is 60% (Phase 2; embeddings are already
@@ -180,7 +185,7 @@ mobile-first low-bandwidth is the user-facing strategy.
 the official app; per-IP rate limiting + concurrent-stream cap; bot user-agent
 blocklist + behaviour/entropy checks; validated input sizes; docs/redoc disabled in
 production; secrets never committed. The deterministic abstention guard and
-official-sources-only retrieval harden the content layer. (67 tests cover nonce,
+allow-listed-source retrieval hardens the content layer. (67 tests cover nonce,
 abstention, security, schema, and the reviewed-answer streaming path.) The admin
 portal adds **session-cookie auth** (bcrypt, httpOnly, SameSite-Lax, ministry-scoped
 SQL so staff only see their own data; rate-limited login; generic 401).

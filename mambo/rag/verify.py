@@ -1,10 +1,10 @@
 """Web-search verifier — triggered when the RAG answer hedges.
 
-Tavily searches the web (Zimbabwe-scoped), then **deepseek-v4-pro** synthesizes
+Tavily searches the web (Zimbabwe-scoped), then the configured generation model synthesizes
 a short, clean, professional summary from the results. Never dumps raw URLs.
 Result reads like a helpful officer who checked external sources — not a search
 engine. Always preceded by a clear disclaimer that this is web-sourced, not an
-official government document.
+allow-listed corpus document.
 """
 
 from __future__ import annotations
@@ -20,7 +20,7 @@ from shared.config import settings
 TAVILY_KEY = os.environ.get("TAVILY_API_KEY")
 TAVILY_URL = "https://api.tavily.com/search"
 
-# Web verification is OFF by default so the "official-sources-only" trust claim
+# Web verification is OFF by default so the allow-listed-source trust claim
 # holds for the submission. Set RUZIVO_ENABLE_WEB_VERIFY=true (and TAVILY_API_KEY)
 # to turn it on, e.g. for the live demo. See RUZIVO_AI4I_GAP_ANALYSIS.md (P0).
 WEB_VERIFY_ENABLED = os.environ.get("RUZIVO_ENABLE_WEB_VERIFY", "").lower() in ("1", "true", "yes")
@@ -28,12 +28,12 @@ WEB_VERIFY_ENABLED = os.environ.get("RUZIVO_ENABLE_WEB_VERIFY", "").lower() in (
 # DeepSeek pro — the reasoning model, better for synthesis from multiple sources
 _pro = OpenAI(api_key=settings.deepseek_api_key, base_url=settings.deepseek_base_url)
 
-SYNTH_PROMPT = """You are a helpful research assistant for a Government of Zimbabwe \
-information service. Below are web search results about a citizen's question. \
+SYNTH_PROMPT = """You are a helpful research assistant for a Zimbabwe public-service \
+information tool. Below are web search results about a citizen's question. \
 Synthesize them into ONE short, clean, professional paragraph (3-5 sentences max) \
 that answers the question. Follow these rules:
 
-- Write like a helpful government officer, not a search engine. Warm, clear, direct.
+- Write like a helpful public-service assistant, not a search engine. Warm, clear, direct.
 - Never mention "web search", "search results", "result #1", URLs, or source names.
 - If multiple sources agree, state the information confidently.
 - Filter out irrelevant, foreign, or clearly unofficial content (Reddit gossip, YouTube).

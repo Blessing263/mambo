@@ -1,7 +1,7 @@
 """The scrape allow-list — derived from the Ministry Registry in the database.
 
-Mambo may only ever fetch from the exact official hosts listed in the registry.
-This is the trust boundary for ingestion: only official sources in.
+Mambo may only ever fetch from the exact hosts listed in the registry.
+This is the trust boundary for ingestion: only allow-listed sources in.
 """
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ def allowed_hosts() -> frozenset[str]:
 
 
 def is_allowed(url: str) -> bool:
-    """True only if the URL's host is an exact official host from the registry."""
+    """True only if the URL's host is an exact allow-listed host from the registry."""
     return host_of(url) in allowed_hosts()
 
 

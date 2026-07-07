@@ -1,9 +1,9 @@
 # Mambo — Foundation Spec
 
-> **Mambo** (Shona: *"knowledge"*) — a plain-language, citizen-facing information
-> assistant for the Government of Zimbabwe. Ask a question in everyday words; get a
-> clear, correct answer drawn **only** from official ministry documents, with the
-> source always shown.
+> **Mambo** (Shona: *"king"*) — a plain-language, citizen-facing
+> information assistant for Zimbabwe public services. Ask a question in everyday
+> words; get a clear, cited answer drawn from the allow-listed public-service
+> corpus, with the source always shown.
 
 This document is the **single source of truth** for the project. Architecture,
 scope, decisions, and the build plan all live here. If anything elsewhere conflicts
@@ -13,27 +13,31 @@ with this file, this file wins until it is deliberately updated.
 
 ## 1. Vision
 
-Not one ministry's chatbot — a **whole-of-government** assistant. The Ministry of
-ICT leads (it is the ministry we pitch to), but the platform is designed so **every
-ministry plugs in**. A citizen can ask anything and Mambo routes them to the right
-ministry, answers from that ministry's official documents, and names the source.
+Not one ministry's chatbot — a **whole-of-government-ready** assistant. The
+prototype is led from the ICT use case and already covers multiple ministries plus
+adjacent public bodies/legal sources. The platform is designed so additional
+ministries can plug in through the registry. A citizen can ask a public-service
+question and Mambo routes it to the most relevant covered source, answers from the
+retrieved documents where evidence exists, and names the source.
 
-The name scales: *Mambo* = "knowledge," not "ICT knowledge."
+The name scales: *Mambo* = "king," framed here as the **king of information**:
+one clear interface over a cited, allow-listed corpus rather than one narrow ICT
+topic.
 
-**Pitch framing:** ICT doesn't just build a tool for itself — it builds the thing
-that helps Health, Home Affairs, and every other ministry serve citizens. Leadership
-made visible.
+**Pitch framing:** ICT doesn't just build a tool for itself — it builds shared
+infrastructure that can help other ministries serve citizens as they are onboarded.
 
 ---
 
 ## 2. Core principles (these constrain every decision)
 
 1. **Trust first.** A *wrong* answer is worse than *no* answer. Mambo answers only
-   from official documents, always cites the source, and says "I don't know, here's
-   who to contact" when the documents don't cover something.
-2. **Only official sources in → only official answers out.** The system never
-   touches the open internet at answer time and only ever ingests official
-   `*.gov.zw` domains (enforced by the Ministry Registry allow-list, §6).
+   from retrieved documents, always cites the source, and says "I don't know,
+   here's who to contact" when the corpus doesn't cover something.
+2. **Allow-listed sources in -> cited answers out.** The system never touches the
+   open internet at answer time. Ingestion is constrained to the exact hosts in the
+   registry: ministry/agency domains plus explicitly labelled adjacent public legal
+   sources (enforced by the Ministry Registry allow-list, §6).
 3. **One brain, two faces.** The chat UI is built once and delivered two ways:
    a standalone demo page now, an embeddable website widget later. Same code.
 4. **Modular, swappable boxes.** Three modules meet at clean seams. Any one box can
@@ -65,7 +69,7 @@ scale and run independently.
 
 ### The two boundaries
 - **Webchat ↔ RAG = an API** (question in → answer + citations out). This boundary
-  is what gives us "one brain, two faces" — the same RAG backend serves both the
+  lets the same RAG backend serve both the
   standalone demo and the future widget.
 - **RAG ↔ Ingestion = the database** (no live connection; they only share the
   Knowledge Store). Ingestion's job is to *fill it correctly*; RAG's job is to
@@ -100,11 +104,11 @@ Tags: **[Demo]** build now · **[P2]** Phase 2 · **[Future]** later.
 - Copy / share answer (incl. WhatsApp) **[Demo]**
 
 **Multi-ministry:**
-- **Ministry picker** — cards; 3–4 ministries live in the demo **[Demo]**
+- **Ministry picker** — cards for covered ministries and adjacent sources **[Demo]**
 - **"Find the right office" router** — describe a problem → routed to the exact
   ministry + department + form. *Flagship demo feature.* **[Demo]**
 - Smart contact/directory tool (phone, WhatsApp, address, hours, map) **[Demo: ICT]**
-- "All of Government" free-ask mode **[P2]**
+- "All covered sources" free-ask mode **[Demo]**
 - Per-ministry theming **[P2]**
 
 **Getting started:**
@@ -157,13 +161,14 @@ The query path, per question:
 ```
 
 ### Models
-- **Generation (the backbone):** **DeepSeek V4 Pro**, via DeepSeek's hosted API for
-  the demo. Sits behind a **swappable model interface** — Phase 2 can swap in a
+- **Generation (the backbone):** DeepSeek-compatible hosted generation for the
+  demo. Sits behind a **swappable model interface** — Phase 2 can swap in a
   self-hosted open-weight model (DeepSeek or other) on Ministry servers with no
   change to Modules 1 or 3.
-- **Embeddings (for search):** a **multilingual, open-source, self-hostable**
-  embedding model. Separate job from generation. Multilingual *from day one* so
-  Shona/Ndebele in Phase 2 is an addition, not a re-embed of everything.
+- **Embeddings (for search):** Qwen3-Embedding-8B, a multilingual, self-hosted
+  embedding model served via Ollama. Separate job from generation. Multilingual
+  embeddings help Phase 2 Shona/Ndebele work, but local-language parity is not
+  claimed yet.
 
 ### The router ("traffic cop")
 Before retrieval, classify the question to one or more ministries (using the
@@ -175,8 +180,8 @@ name the source ministry in the answer. This powers "Find the right office."
 - **Confidence threshold:** if retrieval doesn't clearly cover the question, do not
   guess — say so and route to the Ministry's contact line.
 - **Topic-lock:** politely refuse anything outside government/ministry scope.
-- **Reviewed-answer cache (P2):** humans vet the top ~50 questions per ministry so
-  the most-seen answers are guaranteed perfect.
+- **Reviewed-answer cache (P2):** humans vet the top questions per ministry so
+  the most-seen answers can be served consistently without an LLM call.
 - **Question log:** every question recorded → feeds the Phase-2 analytics ("what
   citizens ask most") and quality review. (Public questions only; no private data.)
 
@@ -187,8 +192,9 @@ name the source ministry in the answer. This powers "Find the right office."
 A small, curated, **verified** structured file. One artifact powers five things:
 
 1. **Seeds the scraper** — tells discovery which sites to crawl.
-2. **Security allow-list** — Mambo only ever crawls/cites official `*.gov.zw`
-   domains. The trust boundary for ingestion.
+2. **Security allow-list** — Mambo only ever crawls/cites exact hosts in the
+   registry. These include official ministry/agency domains and explicitly labelled
+   adjacent public legal sources. The trust boundary for ingestion.
 3. **Tags every chunk** with its ministry (powers routing).
 4. **Powers the ministry picker** UI.
 5. **Powers "Find the right office"** + the contact tool.
@@ -208,9 +214,9 @@ A small, curated, **verified** structured file. One artifact powers five things:
     hours:       "…"
 ```
 
-**Source of truth:** we curate it ourselves, verified against each official site
-(seeded from the national e-gov portal where a list exists). ~20 ministries, curated
-once, maintained as needed.
+**Source of truth:** we curate it ourselves, recording the host list and contact
+details used by the app. The current registry covers 5 ministries plus 4 adjacent
+sources; expansion to more ministries is planned as onboarding work.
 
 ---
 
@@ -231,10 +237,12 @@ once, maintained as needed.
 
 ### What makes it "proper" (non-negotiable)
 - **OCR fallback** — many government PDFs are scanned images; without OCR they're invisible.
-- **Incremental refresh** — re-runs touch only new/changed docs ("kept current automatically").
+- **Incremental refresh** — re-runs touch only new/changed docs, supporting
+  scheduled corpus updates without a full rebuild.
 - **Provenance** — every chunk stores exact source URL + page + fetch date, so every
   citation is verifiable.
-- **Politeness & allow-list** — only official domains, rate-limited, robots-respecting.
+- **Politeness & allow-list** — only allow-listed domains, rate-limited,
+  robots-respecting.
   Mambo must never look like it's attacking government servers.
 
 **Runs as a scheduled batch job, not an always-on service** (cost control).
@@ -284,8 +292,8 @@ chunk:
 |---|---|---|
 | Webchat | Next.js + assistant-ui | Components we own; MIT; mobile-first |
 | RAG API | Small backend service | Hosts route→retrieve→augment→generate→trust |
-| Generation LLM | **DeepSeek V4 Pro** (API) | Behind swappable interface; self-host in P2 |
-| Embeddings | Multilingual open-source, self-hosted | Future-proofs Shona/Ndebele |
+| Generation LLM | DeepSeek-compatible hosted generation | Behind swappable interface; self-host in P2 |
+| Embeddings | Qwen3-Embedding-8B via Ollama | Multilingual retrieval layer; local-language parity still P2 |
 | Knowledge Store | Postgres + pgvector | Cloud for demo → Ministry server for P2 |
 | Ingestion | Batch pipeline (scheduled) | Scrape/discover/parse/OCR/chunk/embed/load |
 | Repo | Monorepo, one repo / four folders | Easy Ministry handover |
@@ -309,10 +317,10 @@ mambo/
 ## 11. Phased plan
 
 ### Phase 1 — Demo (now, minimal cost)
-- 3–4 ministries **actually live** with real scraped documents.
+- 5 ministries plus adjacent sources **actually live** with ingested documents.
 - Webchat **[Demo]** features (above), standalone branded page.
 - RAG: route → retrieve → DeepSeek → trust layer, with citations.
-- Ingestion: full proper pipeline, run to seed the 3–4 ministries.
+- Ingestion: full proper pipeline, run to seed the covered sources.
 - Hosting: one cheap cloud instance + hosted Postgres.
 - Goal: a real national-feeling service to show the Minister on a link.
 
@@ -329,11 +337,10 @@ mambo/
 
 ## 12. Open questions / to verify
 
-- **DeepSeek V4 Pro specifics:** confirm open-weight availability (for P2 self-host),
-  context-window size, and pricing (to size chunks + estimate cost).
-- **Embedder choice:** pick the specific multilingual open-source model.
-- **Ministries for the demo:** ICT (lead) + Health + Home Affairs confirmed as the
-  high-traffic set; **the 4th (Finance or Education) is TBD.**
+- **Generation model specifics:** confirm the Phase 2 self-hosted model, context
+  window, and pricing/compute assumptions.
+- **Ministries for expansion:** prioritize the next ministries after the current 5
+  ministry + 4 adjacent-source registry.
 - **Ministry website platform:** for the Phase-2 widget embed (WordPress?).
 - **Hosting for the demo:** cloud provider + region.
 ```

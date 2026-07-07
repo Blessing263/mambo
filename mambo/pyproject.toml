@@ -1,7 +1,7 @@
 [project]
 name = "mambo"
 version = "0.1.0"
-description = "Mambo — plain-language information assistant for the Government of Zimbabwe"
+description = "Mambo — plain-language information assistant for Zimbabwe public services"
 license = "Apache-2.0"
 authors = [
     { name = "Kundai Guvaza", email = "guvazakundai@gmail.com" },

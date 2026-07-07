@@ -172,14 +172,14 @@ function Mark({ size = 30, radius = 9 }) {
   );
 }
 
-/* Wordmark — Ruzivo set in the display serif with a gold full-stop */
+/* Wordmark — Mambo set in the display serif with a gold full-stop */
 function Wordmark({ size = 22, color }) {
   return (
     <span style={{
       fontFamily: "var(--font-display)", fontWeight: 700, fontSize: size,
       letterSpacing: "-0.01em", color: color || "var(--ink)", lineHeight: 1,
     }}>
-      Ruzivo<span style={{ color: "var(--gold)" }}>.</span>
+      Mambo<span style={{ color: "var(--gold)" }}>.</span>
     </span>
   );
 }

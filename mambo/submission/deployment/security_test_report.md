@@ -10,8 +10,8 @@
 | Bot UA blocklist | python-requests, curl, wget, scrapy, zgrab, etc. blocked; browser UA required; sec-fetch-site consistency | `rag/security.py::_bot_check` |
 | Behaviour | Sub-500ms cadence + low-entropy + over-long-question detection per session | `rag/security.py::_behavior_check` |
 | Input limits | Question ≤ 2000 chars; history ≤ 20 turns; validated (Pydantic); no docs/redoc in prod | `rag/api.py` |
-| Content safety | Deterministic abstention guard (medical, legal, personal-data, political, prompt-injection) before retrieval; system-prompt topic-lock; official-sources-only corpus | `rag/guard.py`, `rag/prompt.py` |
-| Official-only | Tavily web verifier OFF by default (`RUZIVO_ENABLE_WEB_VERIFY`); retrieval only from allow-listed official domains | `rag/verify.py`, `ingestion/allowlist.py` |
+| Content safety | Deterministic abstention guard (medical, legal, personal-data, political, prompt-injection) before retrieval; system-prompt topic-lock; allow-listed source corpus | `rag/guard.py`, `rag/prompt.py` |
+| Allow-listed only | Tavily web verifier OFF by default (`RUZIVO_ENABLE_WEB_VERIFY`); retrieval only from allow-listed registry domains | `rag/verify.py`, `ingestion/allowlist.py` |
 | Secrets | DeepSeek key read from env / `~/.secrets`, never committed; `.env` gitignored | `shared/config.py`, `.gitignore` |
 | Errors | Generic error bodies; no stack-trace leakage | `rag/api.py` exception handlers |
 
