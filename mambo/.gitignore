@@ -36,4 +36,4 @@ test-results/
 submission/_proposal.html
 
 # local team contacts (PII) — not for git
-submission/team_contacts.local.md
+submission/*.local.md
