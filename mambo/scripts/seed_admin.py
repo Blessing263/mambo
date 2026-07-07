@@ -1,16 +1,19 @@
 """Seed ministry demo-staff accounts + sample curated (reviewed) answers.
 
-Idempotent. The demo password is env-overridable (MAMBO_ADMIN_PASSWORD, default
-'mambo2026'). The sample curated answers use the EXACT journey-tile question
-strings, so those tiles return the vetted answer instantly in the demo.
+Idempotent. The demo password comes from MAMBO_ADMIN_PASSWORD; if unset, a
+random one is generated and printed — there is deliberately no fixed default,
+so a re-run can never silently reset live accounts to a publicly known value.
+The sample curated answers use the EXACT journey-tile question strings, so
+those tiles return the vetted answer instantly in the demo.
 
-Run:  uv run python scripts/seed_admin.py
+Run:  MAMBO_ADMIN_PASSWORD=... uv run python scripts/seed_admin.py
 """
 
 from __future__ import annotations
 
 import json
 import os
+import secrets
 import sys
 from pathlib import Path
 
@@ -19,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from shared.db import get_conn  # noqa: E402
 from rag.auth import hash_password, normalize_question  # noqa: E402
 
-PASSWORD = os.environ.get("MAMBO_ADMIN_PASSWORD", "mambo2026")
+PASSWORD = os.environ.get("MAMBO_ADMIN_PASSWORD") or f"Mambo-{secrets.token_urlsafe(12)}"
 REGISTRY = json.loads(
     (Path(__file__).resolve().parent.parent / "registry" / "ministries.json").read_text()
 )

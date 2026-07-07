@@ -55,7 +55,7 @@ export default function AdminLogin() {
           </form>
         </Surface>
         <p className="mt-3 text-center text-[11px]" style={{ color: "var(--text-tertiary)" }}>
-          Demo: <code style={{ fontFamily: "var(--font-mono, monospace)" }}>home_affairs@demo.mambo</code> · <code>mambo2026</code>
+          Demo account: <code style={{ fontFamily: "var(--font-mono, monospace)" }}>home_affairs@demo.mambo</code> — password provided with the AI4I submission
         </p>
       </div>
     </div>
