@@ -1,5 +1,5 @@
 component,category,version,license,source,notes
-Ruzivo application code,Code,-,To assign (propose MIT or Apache-2.0 for AI4I handover),Own work,Decide and state the licence explicitly before submission.
+Mambo application code,Code,-,MIT,Own work,Licensed MIT (see LICENSE at repo root).
 FastAPI,Python package,>=0.115,MIT,https://github.com/tiangolo/fastapi,RAG API.
 uvicorn,Python package,>=0.30,BSD-3-Clause,https://github.com/encode/uvicorn,ASGI server.
 openai (python SDK),Python package,>=1.40,MIT,https://github.com/openai/openai-python,OpenAI-compatible client used to call DeepSeek.

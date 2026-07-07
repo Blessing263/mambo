@@ -86,7 +86,7 @@ generate or fall back → trust layer`. The safety guard abstains before retriev
 
 **Data.** 889 official documents / 2,901 chunks from 9+ official sources
 (5 ministries + ZIMRA, ZIMSEC, Veritas, ZimLII, + embassy/consulate procedure pages).
-(5 ministries + ZIMRA, ZIMSEC, Veritas, ZimLII). Every chunk stores source URL,
+Every chunk stores source URL,
 page, fetch date, content hash and raw path — so every citation is verifiable.
 
 **Why AI is necessary (not a sledgehammer).** Plain-language synthesis, multi-
