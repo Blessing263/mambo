@@ -99,8 +99,11 @@ ground generation in them. We do not apply AI where a rule would do.
 `[n]` citations on every answer; honest **evidence-status badge** (answered /
 partial / unsupported / declined); a deterministic **abstention guard** (medical,
 legal, personal-data, political, prompt-injection); **service-journey cards** for
-six common tasks; **ministry handoff cards**; **live "thinking" steps** that narrate
-the retrieval; streaming; mobile-first; light/dark themes; a **designed national
+six common tasks; **ministry handoff cards** plus a persistent **"Talk to a human"**
+flow — every ministry's verified contact (call / WhatsApp / email / office hours)
+one tap away at any time, not only when an answer falls back; switching ministry
+focus starts a **fresh conversation** (no cross-ministry context bleed);
+**live "thinking" steps** that narrate the retrieval; streaming; mobile-first; light/dark themes; a **designed national
 identity** (Spectral/Hanken typography, flag-palette tokens, a Seal/Mark/Wordmark);
 and a **ministry customer-service portal** (`/admin`) with per-ministry login,
 a scoped analytics dashboard (top questions, fallback rate, feedback), and
@@ -166,10 +169,11 @@ mobile-first low-bandwidth is the user-facing strategy.
 | Obligation | How Mambo handles it |
 |---|---|
 | Lawful basis | Public official documents (low personal-data risk) |
+| Consent | **Data-use consent checkbox** before the first question: asking is blocked until it is ticked; the choice is stored client-side (versioned key, timestamped) and is revocable by unticking — no account or server-side identity is created |
 | Data minimisation | Query log keeps only needed fields; `client_ip`/`user_agent` retention-bounded |
 | Retention & deletion | Defined retention window + deletion workflow (planned PII redaction) |
 | Access control | Restricted log access by role |
-| Transparency | User notice: do not enter ID/medical/private information |
+| Transparency | Inline notice beside the consent checkbox: do not enter ID numbers, phone numbers, or medical information |
 | Open-data release | **Not** claimed for query logs |
 
 **Cybersecurity.** Nonce challenge (single-use) on write endpoints; origin lock to

@@ -32,6 +32,10 @@ const JOURNEY_PROMPT: Record<string, string> = {
 let idCounter = 0;
 const nextId = () => `m${++idCounter}`;
 
+// Data-use consent (Data Protection Act [Chapter 12:07]): asking is blocked until
+// the checkbox is ticked; the choice is stored client-side with a timestamp.
+const CONSENT_KEY = "mambo_consent_v1";
+
 interface Props {
   ministries: Ministry[];
   ministriesLoaded: boolean;
@@ -45,6 +49,8 @@ export function Chat({ ministries, ministriesLoaded, selected, onSelect, chatSta
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [consented, setConsented] = useState(false);
+  const [consentNudge, setConsentNudge] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -52,6 +58,7 @@ export function Chat({ ministries, ministriesLoaded, selected, onSelect, chatSta
   const byId = useMemo(() => Object.fromEntries(ministries.map((m) => [m.id, m])) as Record<string, Ministry>, [ministries]);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+  useEffect(() => { try { if (localStorage.getItem(CONSENT_KEY)) setConsented(true); } catch { /* private mode */ } }, []);
   useEffect(() => { if (chatStarted && inputRef.current) inputRef.current.focus(); }, [chatStarted]);
   useEffect(() => () => abortRef.current?.abort(), []);
 
@@ -59,9 +66,19 @@ export function Chat({ ministries, ministriesLoaded, selected, onSelect, chatSta
     setMessages((prev) => prev.map((m) => (m.id === id ? fn(m) : m)));
   }
 
+  function setConsent(on: boolean) {
+    setConsented(on);
+    setConsentNudge(false);
+    try {
+      if (on) localStorage.setItem(CONSENT_KEY, new Date().toISOString());
+      else localStorage.removeItem(CONSENT_KEY);
+    } catch { /* private mode */ }
+  }
+
   async function send(question?: string) {
     const q = (question ?? input).trim();
     if (!q || busy) return;
+    if (!consented) { setConsentNudge(true); return; }
     setInput("");
     setBusy(true);
     if (!chatStarted) onChatStart();
@@ -91,7 +108,8 @@ export function Chat({ ministries, ministriesLoaded, selected, onSelect, chatSta
 
   if (!chatStarted) {
     return <Landing value={input} onChange={setInput} onAsk={onAsk} busy={busy}
-      byId={byId} ministries={ministries} ministriesLoaded={ministriesLoaded} selected={selected} onSelect={onSelect} />;
+      byId={byId} ministries={ministries} ministriesLoaded={ministriesLoaded} selected={selected} onSelect={onSelect}
+      consented={consented} consentNudge={consentNudge} onConsent={setConsent} />;
   }
 
   return (
@@ -120,10 +138,12 @@ export function Chat({ ministries, ministriesLoaded, selected, onSelect, chatSta
 /* ─── Service-first Landing ─── */
 function Landing({
   value, onChange, onAsk, busy, byId, ministries, ministriesLoaded, selected, onSelect,
+  consented, consentNudge, onConsent,
 }: {
   value: string; onChange: (v: string) => void; onAsk: (q: string) => void; busy: boolean;
   byId: Record<string, Ministry>; ministries: Ministry[]; ministriesLoaded: boolean;
   selected: string | null; onSelect: (id: string | null) => void;
+  consented: boolean; consentNudge: boolean; onConsent: (on: boolean) => void;
 }) {
   const canSend = !busy && !!value.trim() && ministriesLoaded;
   return (
@@ -164,6 +184,7 @@ function Landing({
               </button>
             </div>
           </Surface>
+          <ConsentBox checked={consented} nudge={consentNudge} onChange={onConsent} />
           <p className="mt-2 text-center text-[11px]" style={{ color: "var(--text-tertiary)" }}>
             <kbd className="rounded border px-1 py-px text-[10px] font-mono" style={{ borderColor: "var(--border-primary)" }}>Enter</kbd> to send
           </p>
@@ -187,6 +208,36 @@ function Landing({
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ─── Data-use consent checkbox (DPA [Chapter 12:07]) ─── */
+function ConsentBox({ checked, nudge, onChange }: {
+  checked: boolean; nudge: boolean; onChange: (on: boolean) => void;
+}) {
+  return (
+    <div className="mt-2">
+      <label className="flex items-start gap-2.5 rounded-xl px-3 py-2.5 cursor-pointer transition"
+        style={{
+          background: "var(--bg-secondary)",
+          border: nudge ? "1.5px solid var(--red)" : "1px solid var(--border-light)",
+        }}>
+        <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)}
+          aria-describedby="consent-note" className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--accent)]" />
+        <span id="consent-note" className="text-[12px] leading-relaxed" style={{ color: "var(--text-secondary)" }}>
+          I agree that my question may be processed and stored in minimised form to answer it
+          and improve the service (Data Protection Act [Chapter 12:07]).{" "}
+          <strong style={{ color: "var(--text-primary)" }}>Please don&apos;t include personal details</strong> —
+          ID numbers, phone numbers, or medical information.
+        </span>
+      </label>
+      {nudge && (
+        <p role="alert" className="mt-1.5 flex items-center gap-1 text-[12px] font-medium m-0" style={{ color: "var(--red)" }}>
+          <span className="material-symbols" style={{ fontSize: 14 }}>error</span>
+          Please tick the consent box before asking.
+        </p>
+      )}
     </div>
   );
 }
