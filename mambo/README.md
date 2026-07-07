@@ -42,8 +42,7 @@ government documents — with the source always shown. Live demo:
 - **`registry/`** — the Ministry Registry: source of truth + the scrape allow-list.
 - **`shared/`** — config, DB, and embeddings used by both ingestion and RAG.
 
-See **[FOUNDATION.md](FOUNDATION.md)** for the full design and **[RUNBOOK.md](RUNBOOK.md)**
-for operations (services, ports, ingestion, the RunPod GPU embedding workflow).
+See **[FOUNDATION.md](FOUNDATION.md)** for the full design and architecture decisions.
 
 ## Stack
 

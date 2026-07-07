@@ -53,7 +53,7 @@ cd webchat && npm install && npm run dev          # webchat
 uv run pytest                                      # 67 tests
 ```
 
-See `mambo/RUNBOOK.md` for services, ports, and the GPU embedding workflow.
+See `mambo/FOUNDATION.md` for the architecture and design decisions.
 
 ## Status
 
