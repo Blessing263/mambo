@@ -105,6 +105,9 @@ body {
     var(--zw-black) 42.84% 57.16%, var(--zw-red) 57.16% 71.44%, var(--zw-gold) 71.44% 85.72%,
     var(--zw-green) 85.72% 100%);
 }
+/* On dark surfaces the black stripe vanishes into the background — a faint
+   outline keeps the ribbon reading as one continuous band. */
+[data-theme="dark"] .flag-ribbon { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08); }
 
 /* ─── Scrollbars ─── */
 @supports (scrollbar-width: thin) { * { scrollbar-color: var(--border-primary); scrollbar-width: thin; } }
@@ -125,11 +128,13 @@ body {
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 @keyframes caret-blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+@keyframes shake { 0%,100% { transform: translateX(0); } 20%,60% { transform: translateX(-4px); } 40%,80% { transform: translateX(4px); } }
 .animate-pulse-soft { animation: pulse-soft 1.4s ease-in-out infinite; }
 .animate-fade-up { animation: fade-up 0.4s var(--ease-out) both; }
 .animate-rise { animation: rise 0.32s var(--ease-out) both; }
 .animate-scale-in { animation: scale-in 0.4s var(--ease-out) both; }
 .animate-spin { animation: spin 0.7s linear infinite; }
+.animate-shake { animation: shake 0.4s var(--ease-out); }
 
 /* ─── Skeleton loader ─── */
 .skeleton {

@@ -89,8 +89,8 @@ export default function Home() {
           <div className="flex items-center gap-1">
             <button
               onClick={() => setHandoffOpen(true)}
-              className="flex h-9 items-center gap-1.5 rounded-lg px-2.5 transition"
-              style={{ color: "var(--text-secondary)", border: "1px solid var(--border-primary)" }}
+              className="flex h-9 items-center gap-1.5 rounded-lg px-2.5 transition hover:bg-[var(--bg-hover)]"
+              style={{ color: "var(--text-secondary)", border: "1px solid var(--border-primary)", background: "var(--bg-surface)" }}
               aria-label="Talk to a human"
               title="Talk to a human at the ministry"
             >

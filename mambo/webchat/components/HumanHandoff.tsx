@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Ministry } from "@/lib/types";
 import { MINISTRY_ICON, MINISTRY_SUBTITLE } from "@/lib/types";
 import { ContactCard } from "./AnswerBlocks";
+import { FlagRibbon } from "./Brand";
 
 /* "Talk to a human" — the per-ministry human handover flow.
    Every ministry's verified contact (from the official registry, served by
@@ -40,9 +41,10 @@ export function HumanHandoff({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center p-4" role="dialog" aria-modal="true" aria-label="Talk to a human">
-      <div className="absolute inset-0 animate-fade-up" style={{ background: "rgba(10, 15, 12, 0.5)", animationDuration: "0.15s" }} onClick={onClose} aria-hidden="true" />
-      <div className="relative w-full max-w-md rounded-2xl animate-scale-in"
+      <div className="absolute inset-0 animate-fade-up" style={{ background: "rgba(8, 12, 10, 0.62)", backdropFilter: "blur(3px)", animationDuration: "0.15s" }} onClick={onClose} aria-hidden="true" />
+      <div className="relative w-full max-w-md overflow-hidden rounded-2xl animate-scale-in"
         style={{ background: "var(--bg-primary)", border: "1px solid var(--border-light)", boxShadow: "var(--shadow-md)", maxHeight: "85dvh", overflowY: "auto" }}>
+        <FlagRibbon height={3} />
         <div className="flex items-center gap-2 px-4 py-3 sticky top-0" style={{ borderBottom: "1px solid var(--border-light)", background: "var(--bg-primary)" }}>
           {m && (
             <button onClick={() => setPicked(null)} className="grid h-8 w-8 place-items-center rounded-lg transition hover:bg-[var(--bg-hover)]"

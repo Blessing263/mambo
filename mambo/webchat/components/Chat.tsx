@@ -212,12 +212,25 @@ function Landing({
   );
 }
 
-/* ─── Data-use consent checkbox (DPA [Chapter 12:07]) ─── */
+/* ─── Data-use consent checkbox (DPA [Chapter 12:07]) ───
+   Full box until consent is given; then it folds into one quiet line so
+   returning visitors keep the notice without the visual weight. */
 function ConsentBox({ checked, nudge, onChange }: {
   checked: boolean; nudge: boolean; onChange: (on: boolean) => void;
 }) {
+  if (checked) {
+    return (
+      <label className="mt-2 flex items-center justify-center gap-2 cursor-pointer px-2 animate-rise">
+        <input type="checkbox" checked onChange={(e) => onChange(e.target.checked)}
+          aria-describedby="consent-note" className="h-3.5 w-3.5 shrink-0 accent-[var(--accent)]" />
+        <span id="consent-note" className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>
+          Data-use consent given (DPA [Chapter 12:07]) — please don&apos;t include personal details.
+        </span>
+      </label>
+    );
+  }
   return (
-    <div className="mt-2">
+    <div className={`mt-2${nudge ? " animate-shake" : ""}`}>
       <label className="flex items-start gap-2.5 rounded-xl px-3 py-2.5 cursor-pointer transition"
         style={{
           background: "var(--bg-secondary)",
