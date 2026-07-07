@@ -1,8 +1,8 @@
 """Seed ministry demo-staff accounts + sample curated (reviewed) answers.
 
 Idempotent. The demo password comes from MAMBO_ADMIN_PASSWORD; if unset, a
-random one is generated and printed — there is deliberately no fixed default,
-so a re-run can never silently reset live accounts to a publicly known value.
+random one is generated and printed. For the public demo, set the password through
+the private submission/ops channel, not in public-facing copy.
 The sample curated answers use the EXACT journey-tile question strings, so
 those tiles return the vetted answer instantly in the demo.
 
@@ -22,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from shared.db import get_conn  # noqa: E402
 from rag.auth import hash_password, normalize_question  # noqa: E402
 
+PASSWORD_FROM_ENV = "MAMBO_ADMIN_PASSWORD" in os.environ
 PASSWORD = os.environ.get("MAMBO_ADMIN_PASSWORD") or f"Mambo-{secrets.token_urlsafe(12)}"
 REGISTRY = json.loads(
     (Path(__file__).resolve().parent.parent / "registry" / "ministries.json").read_text()
@@ -165,7 +166,10 @@ def main() -> None:
         conn.commit()
         cur.execute("SELECT email, ministry_id FROM staff ORDER BY ministry_id;")
         rows = cur.fetchall()
-    print(f"Seeded {len(rows)} demo staff (password: {PASSWORD}):")
+    if PASSWORD_FROM_ENV:
+        print(f"Seeded {len(rows)} demo staff (password: set from MAMBO_ADMIN_PASSWORD):")
+    else:
+        print(f"Seeded {len(rows)} demo staff (generated password: {PASSWORD}):")
     for r in rows:
         print(f"  {r['email']:36} -> {r['ministry_id']}")
     print(f"+ {len(SAMPLE_REVIEWED)} sample curated answers (home_affairs/lost-ID, ict/AI-Strategy).")

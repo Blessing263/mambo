@@ -11,6 +11,7 @@ from __future__ import annotations
 import os
 import secrets
 from dataclasses import dataclass
+from urllib.parse import urlparse
 
 import bcrypt
 from fastapi import HTTPException, Request
@@ -109,6 +110,7 @@ def current_staff(request: Request) -> Staff:
 def same_origin(request: Request) -> None:
     """Light CSRF defense for admin mutations: the Origin/Referer host must match the request host."""
     origin = request.headers.get("origin") or request.headers.get("referer") or ""
-    host = request.headers.get("host", "")
-    if origin and host and host not in origin:
+    host = request.headers.get("host", "").split(":", 1)[0]
+    origin_host = urlparse(origin).hostname if origin else None
+    if origin_host and host and origin_host != host:
         raise HTTPException(status_code=403, detail="Cross-origin request not allowed")

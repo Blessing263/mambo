@@ -60,3 +60,49 @@ def test_unscoped_miss_stays_honest(monkeypatch):
         "something the corpus does not cover", ["ict"])
     assert not confident
     assert detected == ["ict"]
+
+
+def test_reviewed_answer_respects_active_ministry_filter(monkeypatch):
+    class Cur:
+        row = None
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def execute(self, _sql, params):
+            if params == ("how do i apply for a passport?",):
+                self.row = {
+                    "ministry_id": "home_affairs",
+                    "answer": "Passport answer",
+                    "citations": [],
+                }
+            elif params == ("how do i apply for a passport?", "home_affairs"):
+                self.row = {
+                    "ministry_id": "home_affairs",
+                    "answer": "Passport answer",
+                    "citations": [],
+                }
+            else:
+                self.row = None
+
+        def fetchone(self):
+            return self.row
+
+    class Conn:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def cursor(self):
+            return Cur()
+
+    monkeypatch.setattr(service, "get_conn", lambda: Conn())
+
+    assert service.get_reviewed("How do I apply for a passport?", "finance") is None
+    assert service.get_reviewed("How do I apply for a passport?", "home_affairs")["source_ministry"] == ["home_affairs"]
+    assert service.get_reviewed("How do I apply for a passport?")["source_ministry"] == ["home_affairs"]

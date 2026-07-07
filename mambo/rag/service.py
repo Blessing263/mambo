@@ -135,17 +135,24 @@ def _log_stream(question, session_id, detected, resp, latency_ms,
     _log(question, session_id, detected, resp, latency_ms, client_ip, user_agent)
 
 
-def get_reviewed(question: str) -> dict | None:
+def get_reviewed(question: str, ministry_filter: str | None = None) -> dict | None:
     """Exact-match a human-vetted (curated) answer. Returns a full response dict, or None.
     Runs AFTER the safety guard (unsafe questions still decline) and BEFORE the LLM —
     so a curated top question is answered instantly with zero model cost."""
     norm = normalize_question(question)
     try:
         with get_conn() as conn, conn.cursor() as cur:
-            cur.execute(
-                "SELECT ministry_id, answer, citations FROM reviewed_answers "
-                "WHERE question_norm = %s AND enabled ORDER BY updated_at DESC LIMIT 1;",
-                (norm,))
+            if ministry_filter:
+                cur.execute(
+                    "SELECT ministry_id, answer, citations FROM reviewed_answers "
+                    "WHERE question_norm = %s AND ministry_id = %s AND enabled "
+                    "ORDER BY updated_at DESC LIMIT 1;",
+                    (norm, ministry_filter))
+            else:
+                cur.execute(
+                    "SELECT ministry_id, answer, citations FROM reviewed_answers "
+                    "WHERE question_norm = %s AND enabled ORDER BY updated_at DESC LIMIT 1;",
+                    (norm,))
             row = cur.fetchone()
     except Exception:
         return None
@@ -207,7 +214,7 @@ def ask(question: str, *, history: list[dict] | None = None,
         return resp
 
     # ── Reviewed-answer short-circuit — serve a ministry-vetted answer instantly ──
-    rev = get_reviewed(question)
+    rev = get_reviewed(question, ministry_filter)
     if rev:
         _log(question, session_id, rev["source_ministry"], rev,
              int((time.time() - t0) * 1000), client_ip, user_agent)
@@ -281,7 +288,7 @@ def prepare_stream(question: str, history: list[dict] | None = None,
         }}
 
     # ── Reviewed-answer short-circuit — serve a ministry-vetted answer instantly ──
-    rev = get_reviewed(question)
+    rev = get_reviewed(question, ministry_filter)
     if rev:
         return {"reviewed": rev}
 

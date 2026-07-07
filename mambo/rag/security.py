@@ -55,7 +55,7 @@ _WINDOWS: dict[str, tuple[int, int]] = {  # seconds, max
     "/health":     (60, 60),
     "/ministries": (60, 60),
     "/admin/login": (60, 10),  # staff login: 10/min per IP
-    # /ask/stream handled by _concurrent dict
+    "/ask/stream": (60, 30),
 }
 
 _hits: dict[str, list[float]] = defaultdict(list)  # ip:key → [timestamps]
@@ -177,7 +177,7 @@ def _bot_check(request: Request, nonce: str | None = None, *, require_nonce: boo
 _ALLOWED_ORIGINS = {
     h.strip() for h in
     __import__("os").environ.get("RUZIVO_ALLOWED_ORIGINS",
-        "https://ruzivo.yttrix.tech,http://localhost:3000,http://localhost:3055"
+        "https://mambo.yttrix.tech,https://ruzivo.yttrix.tech,http://localhost:3000,http://localhost:3055"
     ).split(",") if h.strip()
 }
 

@@ -46,7 +46,7 @@ from .security import (
 _ALLOWED_ORIGINS = [
     h.strip() for h in
     __import__("os").environ.get("RUZIVO_ALLOWED_ORIGINS",
-        "https://ruzivo.yttrix.tech,http://localhost:3000,http://localhost:3055"
+        "https://mambo.yttrix.tech,https://ruzivo.yttrix.tech,http://localhost:3000,http://localhost:3055"
     ).split(",") if h.strip()
 ]
 
@@ -196,6 +196,7 @@ def _sse(obj: dict) -> str:
 @app.post("/ask/stream")
 def ask_stream(req: AskRequest, request: Request) -> StreamingResponse:
     _origin_check(request)
+    _ratelimit_check(request, "/ask/stream", session_id=req.session_id)
     _bot_check(request, nonce=req.nonce, require_nonce=True)
     _concurrent_acquire(request)
     if not _behavior_check(req.session_id, req.question):
@@ -260,6 +261,11 @@ def ask_stream(req: AskRequest, request: Request) -> StreamingResponse:
                     "evidence_status": prep.get("evidence_status", "answered"),
                     "fallback_contact": None,
                 })
+                service._log_stream(
+                    req.question, req.session_id, [],
+                    {"confident": True, "citations": []}, 0,
+                    client_ip=client_ip, user_agent=user_agent,
+                )
                 return
 
             results = prep["results"]
@@ -277,6 +283,11 @@ def ask_stream(req: AskRequest, request: Request) -> StreamingResponse:
                     "service_journey": None,
                     "fallback_contact": fb["fallback_contact"],
                 })
+                service._log_stream(
+                    req.question, req.session_id, fb["source_ministry"],
+                    {"confident": False, "citations": []}, 0,
+                    client_ip=client_ip, user_agent=user_agent,
+                )
                 return
 
             # Honest, progressive "thinking" steps (real values from prep), shown
