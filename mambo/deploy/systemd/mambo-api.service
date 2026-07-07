@@ -1,15 +1,19 @@
 [Unit]
-Description=Mambo RAG API
-After=network.target postgresql.service ollama-ruzivo.service
+Description=Mambo RAG API (FastAPI/uvicorn, port 8771)
+After=network-online.target postgresql.service ollama-ruzivo.service
+Wants=network-online.target
 
 [Service]
 Type=simple
-User=mambo
-WorkingDirectory=/home/mambo/app
-EnvironmentFile=/home/mambo/.env
-ExecStart=/home/mambo/.local/bin/uv run uvicorn rag.api:app --host 127.0.0.1 --port 8770
+User=blessing
+Group=blessing
+WorkingDirectory=/home/blessing/potraz/mambo
+EnvironmentFile=/etc/mambo/mambo-api.env
+Environment="RUZIVO_ENV=production"
+Environment="RUZIVO_ALLOWED_ORIGINS=https://mambo.yttrix.tech,http://localhost:3056"
+ExecStart=/home/blessing/potraz/mambo/.venv/bin/python -m uvicorn rag.api:app --host 127.0.0.1 --port 8771 --log-level warning
 Restart=always
-RestartSec=5
+RestartSec=3
 
 [Install]
 WantedBy=multi-user.target

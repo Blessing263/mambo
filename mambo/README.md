@@ -80,6 +80,17 @@ The repository includes production scaffolding:
   process management.
 - `scripts/backup.sh` for PostgreSQL backups with optional remote upload.
 
+Current VPS routing for `mambo.yttrix.tech`:
+
+- nginx listens publicly on `:80` and `:443` via the local SNI listener on
+  `127.0.0.1:8443`.
+- `https://mambo.yttrix.tech/` proxies to `mambo-web.service`, a Next.js production
+  server on `127.0.0.1:3056`.
+- `https://mambo.yttrix.tech/api/*` proxies to `mambo-api.service`, FastAPI/Uvicorn on
+  `127.0.0.1:8771`; proxy buffering is disabled for streaming responses.
+- The API needs a non-empty `DATABASE_URL` and should run from the same Python
+  environment used by the project tests so `psycopg_pool` is available.
+
 ## Quick start
 
 ```bash
