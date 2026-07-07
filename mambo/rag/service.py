@@ -158,6 +158,31 @@ def get_reviewed(question: str) -> dict | None:
     }
 
 
+# A whole-corpus result must beat the scoped shelf's best by this much before
+# the scope is overridden (measured: a true cross-scope miss gaps ~0.2+, while
+# a correctly scoped question retrieves the same top chunk either way).
+_RESCUE_MARGIN = 0.08
+
+
+def _retrieve_with_rescue(search_q: str, detected: list[str]) -> tuple[list[str], list[dict], bool]:
+    """Search within the detected ministry scope, then check the whole corpus.
+    If another shelf holds clearly stronger evidence — a question asked under
+    the wrong scope (stale focus chip, mid-chat topic change, router miss) —
+    answer from there and badge it, instead of dead-ending with "the sources
+    don't cover this". The query embedding is cached, so the second search is
+    one extra vector lookup."""
+    results = retrieval.search(search_q, detected or None, k=K)
+    confident = trust.assess(results)
+    if not detected:
+        return detected, results, confident
+    rescued = retrieval.search(search_q, None, k=K)
+    if trust.assess(rescued):
+        scoped_top = results[0]["score"] if results else 0.0
+        if not confident or rescued[0]["score"] >= scoped_top + _RESCUE_MARGIN:
+            return _distinct_ministries(rescued), rescued, True
+    return detected, results, confident
+
+
 def ask(question: str, *, history: list[dict] | None = None,
         ministry_filter: str | None = None, session_id: str | None = None,
         client_ip: str = "", user_agent: str = "") -> dict:
@@ -207,10 +232,10 @@ def ask(question: str, *, history: list[dict] | None = None,
     # ── Normal RAG path ──
     search_q = llm.rewrite_query(question, history) if history else question
     detected = [ministry_filter] if ministry_filter else router.route(search_q)
-    results = retrieval.search(search_q, detected or None, k=K)
+    detected, results, confident = _retrieve_with_rescue(search_q, detected)
     journey = journeys.match_journey(question)
 
-    if not trust.assess(results):
+    if not confident:
         answering = detected or _distinct_ministries(results)
         resp = trust.fallback_response(question, answering)
         resp["evidence_status"] = "unsupported"
@@ -277,8 +302,7 @@ def prepare_stream(question: str, history: list[dict] | None = None,
 
     search_q = llm.rewrite_query(question, history) if history else question
     detected = [ministry_filter] if ministry_filter else router.route(search_q)
-    results = retrieval.search(search_q, detected or None, k=K)
-    confident = trust.assess(results)
+    detected, results, confident = _retrieve_with_rescue(search_q, detected)
     intent = classify_fut.result()
     chatty = llm.chatty_response(intent)
     if chatty is not None:
