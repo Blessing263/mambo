@@ -93,6 +93,9 @@ Current VPS routing for `mambo.yttrix.tech`:
 
 ## Quick start
 
+Local development defaults are intentionally separate from the live VPS ports above:
+the API runs on `8770` and Next.js runs on `3055` via `npm run dev`.
+
 ```bash
 # Knowledge Store: Postgres 16 + pgvector, database `ruzivo` (see shared/db/schema.sql)
 # Embeddings: Ollama serving qwen3-embedding:8b (DeepSeek key at ~/.secrets/deepseek-api-key)

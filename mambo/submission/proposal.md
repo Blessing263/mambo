@@ -117,7 +117,8 @@ answers **instantly** (sub-second, zero LLM cost) via the reviewed-answer
 short-circuit.
 
 **Measured results (not asserted).** A fresh build from a clean checkout boots;
-**67 automated tests pass**. On the corpus and a 32-question citizen-query set:
+**80 backend tests pass, with 1 integration test skipped by default**. On the
+corpus and a 32-question citizen-query set:
 
 | Metric | Result |
 |---|---|
@@ -137,8 +138,8 @@ multilingual).
 **What is delivered.** A working **two-sided** product: a citizen-facing RAG
 assistant (ingestion → retrieve → generate → trust) AND a ministry customer-service
 portal (per-ministry login, analytics dashboard, reviewed-answer curation). Both
-are deployed and demonstrable; the codebase includes 67 tests, a full evidence
-pack, and a designed national identity system.
+are deployed and demonstrable; the codebase includes 80 passing backend tests,
+a full evidence pack, and a designed national identity system.
 
 **Timeline (8 weeks of AI4I support).**
 
@@ -185,8 +186,9 @@ mobile-first low-bandwidth is the user-facing strategy.
 the official app; per-IP rate limiting + concurrent-stream cap; bot user-agent
 blocklist + behaviour/entropy checks; validated input sizes; docs/redoc disabled in
 production; secrets never committed. The deterministic abstention guard and
-allow-listed-source retrieval hardens the content layer. (67 tests cover nonce,
-abstention, security, schema, and the reviewed-answer streaming path.) The admin
+allow-listed-source retrieval hardens the content layer. (80 passing backend
+tests cover nonce, abstention, security, schema, feedback, sanitisation, and the
+reviewed-answer streaming path.) The admin
 portal adds **session-cookie auth** (bcrypt, httpOnly, SameSite-Lax, ministry-scoped
 SQL so staff only see their own data; rate-limited login; generic 401).
 

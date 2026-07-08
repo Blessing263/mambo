@@ -20,7 +20,7 @@ mambo/                     ← the product (everything below is in here)
 ├── webchat/               Next.js 14 streaming chat (mobile-first)
 ├── registry/              ministry registry + allow-list + service journeys
 ├── shared/                config · db · embeddings · schema
-├── tests/                 pytest suite (67 tests) + eval fixtures
+├── tests/                 pytest suite (80 pass, 1 integration skipped by default) + eval fixtures
 ├── scripts/               validate_corpus · evaluate_mambo · check_citation_links · render_proposal
 └── submission/            Track 3 proposal PDF + full evidence pack (appendices)
 ```
@@ -49,15 +49,16 @@ cd mambo
 uv sync
 uv run python registry/load_registry.py          # sync registry -> DB
 uv run python -m ingestion.pipeline --ministry ict
-uv run uvicorn rag.api:app --port 8770            # RAG API
-cd webchat && npm install && npm run dev          # webchat
-uv run pytest                                      # 67 tests
+uv run uvicorn rag.api:app --port 8770            # local-dev RAG API
+cd webchat && npm install && npm run dev          # local-dev webchat
+uv run pytest tests/ -q                           # 80 pass, 1 skipped
 ```
 
 See `mambo/FOUNDATION.md` for the architecture and design decisions.
 
 ## Status
 
-Working end-to-end MVP; 67 automated tests pass; corpus integrity 8/8; router
-accuracy 89.3% (English). Honest gaps (coverage, local-language parity) are
-documented in `mambo/submission/`. Tracked responsibly on `main`.
+Working end-to-end MVP; 80 backend tests pass with 1 integration test skipped by
+default; the live corpus currently reports 9 ministries, 890 documents, and
+2,901 chunks through `/api/health`. Honest gaps (coverage, local-language parity)
+are documented in `mambo/submission/`. Tracked responsibly on `main`.
