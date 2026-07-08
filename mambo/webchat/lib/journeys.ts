@@ -44,6 +44,25 @@ export const JOURNEYS: ServiceJourney[] = [
   },
 ];
 
+const MINISTRY_JOURNEY_SCOPE: Record<string, string[]> = {
+  home_affairs: ["home_affairs"],
+  finance: ["finance", "zimra"],
+  zimra: ["zimra"],
+  education: ["education", "zimsec"],
+  zimsec: ["zimsec"],
+};
+
+export function relatedMinistryIds(ministryId: string | null | undefined): string[] {
+  if (!ministryId) return [];
+  return MINISTRY_JOURNEY_SCOPE[ministryId] ?? [ministryId];
+}
+
 export function getJourney(id: string | null | undefined): ServiceJourney | undefined {
   return id ? JOURNEYS.find((j) => j.id === id) : undefined;
+}
+
+export function journeysForMinistry(ministryId: string | null | undefined): ServiceJourney[] {
+  if (!ministryId) return JOURNEYS;
+  const allowed = relatedMinistryIds(ministryId);
+  return JOURNEYS.filter((j) => allowed.includes(j.ministry));
 }

@@ -7,14 +7,33 @@ import { getMe, logout } from "@/lib/adminApi";
 import type { Staff } from "@/lib/types";
 import { FlagRibbon, Mark, Wordmark } from "@/components/Brand";
 
-function NavLink({ href, label, active }: { href: string; label: string; active: boolean }) {
+function NavLink({ href, label, icon, active }: { href: string; label: string; icon: string; active: boolean }) {
   return (
-    <Link href={href} className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[13px] font-medium transition hover:bg-[var(--bg-hover)]"
+    <Link href={href} className="flex items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-medium transition hover:bg-[var(--bg-hover)]"
       style={active ? { background: "var(--accent-light)", color: "var(--accent-text)" } : { color: "var(--text-secondary)" }}>
+      <span className="material-symbols" aria-hidden="true" style={{ fontSize: 17 }}>{icon}</span>
       {label}
     </Link>
   );
 }
+
+const navGroups = [
+  {
+    label: "Work queues",
+    links: [
+      { href: "/admin", label: "Command centre", icon: "space_dashboard" },
+      { href: "/admin/questions", label: "Issue inbox", icon: "assignment_late" },
+      { href: "/admin/responses", label: "Official responses", icon: "fact_check" },
+    ],
+  },
+  {
+    label: "Operations",
+    links: [
+      { href: "/admin/settings", label: "Sources & handoff", icon: "source" },
+      { href: "/admin/reviewed", label: "Reviewed answers", icon: "history_edu" },
+    ],
+  },
+];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [staff, setStaff] = useState<Staff | null>(null);
@@ -59,14 +78,39 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
         <FlagRibbon height={2} />
       </header>
-      <nav className="mx-auto flex max-w-6xl flex-wrap gap-1 px-4 pt-4">
-        <NavLink href="/admin" label="Dashboard" active={pathname === "/admin"} />
-        <NavLink href="/admin/questions" label="Question inbox" active={pathname === "/admin/questions"} />
-        <NavLink href="/admin/responses" label="Official responses" active={pathname === "/admin/responses"} />
-        <NavLink href="/admin/settings" label="Sources & handoff" active={pathname === "/admin/settings"} />
-        <NavLink href="/admin/reviewed" label="Reviewed answers" active={pathname === "/admin/reviewed"} />
-      </nav>
-      <main className="mx-auto max-w-6xl px-4 py-5">{children}</main>
+      <div className="mx-auto grid max-w-6xl gap-5 px-4 py-5 lg:grid-cols-[260px_minmax(0,1fr)]">
+        <aside className="lg:sticky lg:top-[70px] lg:self-start">
+          <div className="rounded-xl border p-3" style={{ borderColor: "var(--border-primary)", background: "var(--bg-surface)", boxShadow: "var(--shadow-sm)" }}>
+            <div className="mb-3 rounded-lg p-3" style={{ background: "var(--bg-secondary)" }}>
+              <div className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-tertiary)" }}>Ministry scope</div>
+              <div className="mt-1 font-display text-[15px] font-semibold" style={{ color: "var(--text-primary)" }}>
+                {staff.ministry_short_name || "Unassigned"}
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize" style={{ background: "var(--accent-light)", color: "var(--accent-text)" }}>
+                  {staff.role}
+                </span>
+                <span className="text-[11px]" style={{ color: "var(--text-tertiary)" }}>{staff.email}</span>
+              </div>
+            </div>
+            <nav className="space-y-4">
+              {navGroups.map((group) => (
+                <div key={group.label}>
+                  <div className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-tertiary)" }}>
+                    {group.label}
+                  </div>
+                  <div className="space-y-1">
+                    {group.links.map((link) => (
+                      <NavLink key={link.href} {...link} active={pathname === link.href} />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </nav>
+          </div>
+        </aside>
+        <main className="min-w-0">{children}</main>
+      </div>
     </div>
   );
 }

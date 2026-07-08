@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 _SECRETS_KEY_FILE = Path.home() / ".secrets" / "deepseek-api-key"
+_OPENAI_KEY_FILE = Path.home() / ".secrets" / "openai-api-key"
 
 
 def _deepseek_key() -> str:
@@ -26,6 +27,16 @@ def _deepseek_key() -> str:
         "DeepSeek API key not found: set DEEPSEEK_API_KEY or create "
         f"{_SECRETS_KEY_FILE}"
     )
+
+
+def _openai_key() -> str | None:
+    """Optional — embeddings fall back to Ollama when absent."""
+    key = os.environ.get("OPENAI_API_KEY")
+    if key and key.strip():
+        return key.strip()
+    if _OPENAI_KEY_FILE.exists():
+        return _OPENAI_KEY_FILE.read_text().strip().strip('"')
+    return None
 
 
 # ── Shared environment-derived values (single source of truth) ─────────────
@@ -61,6 +72,10 @@ class Settings:
     ollama_base_url: str
     embed_model: str
     embed_dim: int
+    embed_provider: str
+    openai_api_key: str | None
+    openai_base_url: str
+    openai_embed_model: str
     database_url: str
     is_prod: bool = field(default=IS_PROD)
     allowed_origins: list[str] = field(default_factory=lambda: _ALLOWED_ORIGINS)
@@ -85,7 +100,18 @@ class Settings:
             deepseek_model=os.environ.get("DEEPSEEK_MODEL", "deepseek-v4-flash"),
             ollama_base_url=os.environ.get("OLLAMA_BASE_URL", "http://localhost:11435"),
             embed_model=os.environ.get("EMBED_MODEL", "qwen3-embedding:8b"),
-            embed_dim=int(os.environ.get("EMBED_DIM", "4096")),
+            # text-embedding-3-large native dims. Changing this (or the
+            # provider) means re-embedding the whole corpus — vectors from
+            # different models/dims are not comparable.
+            embed_dim=int(os.environ.get("EMBED_DIM", "3072")),
+            embed_provider=os.environ.get("EMBED_PROVIDER", "openai").lower(),
+            openai_api_key=_openai_key(),
+            openai_base_url=os.environ.get(
+                "OPENAI_BASE_URL", "https://api.openai.com/v1"
+            ),
+            openai_embed_model=os.environ.get(
+                "OPENAI_EMBED_MODEL", "text-embedding-3-large"
+            ),
             database_url=os.environ.get("DATABASE_URL", ""),
         )
 

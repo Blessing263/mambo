@@ -7,18 +7,21 @@ public-service information. It answers plain-language questions using **only** t
 retrieved documents from an allow-listed corpus of ministry, agency, tax,
 education, and public legal sources, with inline citations, an honest evidence-status badge on
 every answer, structured service-journey cards, and a handoff card when it cannot
-answer.
+answer. Ministry staff can also publish approved official responses through a
+role-based portal; those responses are available for exact-match answers and
+semantic retrieval.
 
 ## Components
 
 | Component | Model / tech | Role |
 |---|---|---|
 | Generation | DeepSeek (flash) behind a **swappable** OpenAI-compatible interface; Phase 2 can self-host an open-weight model | Writes the plain-language answer from retrieved passages |
-| Embeddings | **Qwen3-Embedding-8B** (4096-dim), self-hosted via Ollama — multilingual | Semantic retrieval (query + chunks) |
-| Knowledge store | PostgreSQL 16 + pgvector (exact cosine at 4096-dim) | Chunks tagged by ministry, full provenance |
+| Embeddings | **OpenAI text-embedding-3-large** (3072-dim) as the priority provider; Qwen3/Ollama fallback for the self-hosted path | Semantic retrieval (query + chunks) |
+| Knowledge store | PostgreSQL 16 + pgvector (exact cosine at 3072-dim in the current deployment) | Chunks and approved official responses tagged by ministry, full provenance |
 | Retrieval | Ministry-scoped cosine search + recency boost (newest version wins) | Grounds every answer |
 | Routing | Keyword classifier over the ministry registry | "Find the right office" |
 | Trust layer | Confidence threshold (0.45), mandatory citations, abstention guard, fallback/handoff | Honest, safe answers |
+| Admin workflow | Agent/supervisor portal with issue queues and official-response approval | Human ministry knowledge is versioned and fed back into RAG |
 
 ## Intended use
 
@@ -40,6 +43,8 @@ process payments, authenticate users, or access case-specific records.
   page, fetch date, content hash, raw path) stored per chunk.
 - **Queries:** logged for analytics/quality under a minimisation policy
   (retention-bounded `client_ip`/`user_agent`; no solicited personal data).
+- **Approved responses:** official ministry answers are versioned, citation-backed,
+  ministry-scoped, and embedded only after approval.
 
 ## Evaluation (measured)
 

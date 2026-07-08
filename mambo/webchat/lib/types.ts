@@ -58,6 +58,8 @@ export interface AdminQuestion extends AdminQuery {
   id: string;
   evidence_status: "answered" | "partial" | "unsupported" | "declined";
   reviewed: boolean;
+  issue_type: "coverage_gap" | "quality_issue" | "safety_escalation" | "official_answer" | "answered";
+  priority: "urgent" | "high" | "normal" | "published";
 }
 export interface AdminStats {
   total: number; answered: number; fallback_rate: number | null; avg_feedback: number | null;
@@ -65,6 +67,8 @@ export interface AdminStats {
   top_questions: { question: string; count: number }[];
   top_unanswered: { question: string; count: number }[];
   series: { day: string | null; count: number }[];
+  issue_counts: Record<string, number>;
+  response_counts: Record<string, number>;
 }
 export type OfficialResponseStatus = "draft" | "pending_review" | "approved" | "archived";
 export interface OfficialResponse {

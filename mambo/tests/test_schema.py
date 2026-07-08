@@ -26,7 +26,7 @@ def test_query_log_has_client_ip_and_user_agent():
 
 def test_chunks_embedding_is_nullable():
     block = _table("chunks")
-    assert "vector(4096)" in block
+    assert "vector(3072)" in block  # OpenAI text-embedding-3-large
     emb_line = next(l for l in block.splitlines() if "embedding" in l)
     assert "NOT NULL" not in emb_line          # was NOT NULL — broke deferred embedding
 

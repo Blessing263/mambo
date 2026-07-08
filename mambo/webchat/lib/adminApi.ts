@@ -34,8 +34,8 @@ export const login = (email: string, password: string) =>
 export const logout = () => adm<{ ok: true }>("/logout", { method: "POST" });
 export const getStats = (days = 30) => adm<AdminStats>(`/stats?days=${days}`);
 export const getQueries = (limit = 20, offset = 0, q = "") => adm<AdminQuery[]>(`/queries?limit=${limit}&offset=${offset}&q=${encodeURIComponent(q)}`);
-export const getQuestions = (limit = 50, offset = 0, q = "", status = "") =>
-  adm<AdminQuestion[]>(`/questions?limit=${limit}&offset=${offset}&q=${encodeURIComponent(q)}&status=${encodeURIComponent(status)}`);
+export const getQuestions = (limit = 50, offset = 0, q = "", status = "", issue = "") =>
+  adm<AdminQuestion[]>(`/questions?limit=${limit}&offset=${offset}&q=${encodeURIComponent(q)}&status=${encodeURIComponent(status)}&issue=${encodeURIComponent(issue)}`);
 export const getReviewed = () => adm<ReviewedAnswer[]>("/reviewed");
 export const createReviewed = (body: { question: string; answer: string; citations?: any[] }) =>
   adm<{ id: string }>("/reviewed", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });

@@ -20,10 +20,13 @@ public-service corpus — with the source always shown. Live demo:
   so honestly and points to the ministry's contact details.
 - **Smart routing** ("find the right office"): figures out which ministry/agency a
   question belongs to and answers from their documents.
-- **Human-reviewed answers**: ministry staff can curate high-volume questions so
-  vetted answers bypass model generation and stay consistent.
-- **Feedback loop**: citizens can rate answers; staff can search query logs and
-  inspect ministry-scoped analytics for unanswered demand.
+- **Official-response workflow**: ministry agents draft answers from citizen
+  demand; supervisors approve them into instant answers and semantic RAG retrieval.
+- **Role/ministry work queues**: the portal separates coverage gaps, poor feedback,
+  safety/declined questions, and published official answers within each staff
+  member's ministry scope.
+- **Feedback loop**: citizens can rate answers; staff can search query logs,
+  inspect ministry-scoped analytics, and turn repeated gaps into approved guidance.
 - **Conversational**: remembers the last few turns so follow-ups ("what about for
   schools?") resolve correctly.
 - **Streaming, multi-user, mobile-first.**
@@ -39,11 +42,15 @@ public-service corpus — with the source always shown. Live demo:
 ```
 
 - **`ingestion/`** — polite, allow-list-scoped crawler + headless-browser harvester
-  (Playwright) for JS/CDN-protected sites. Embedding is deferrable for bulk GPU runs.
+  (Playwright) for JS/CDN-protected sites, plus a save-first staging workflow:
+  `acquire` (gather everything, resumable budgeted background runs, no DB needed)
+  → `scripts/curate.py` (continuous sorting: classify, rules, human approval)
+  → `ingest_staged` (approved records only) → `embed_bulk` (one bulk API pass).
 - **`rag/`** — FastAPI: ministry router, exact pgvector search, DeepSeek generation
-  behind a swappable interface, trust layer, admin portal API, reviewed-answer cache,
-  feedback endpoint, and abuse protections.
-- **`webchat/`** — Next.js + owned chat components; branded, streaming, ministry picker.
+  behind a swappable interface, trust layer, admin portal API, official-response
+  publishing pipeline, reviewed-answer cache, feedback endpoint, and abuse protections.
+- **`webchat/`** — Next.js + owned chat components; branded, streaming, ministry picker,
+  and ministry-aware service suggestions.
 - **`registry/`** — the Ministry Registry: source of truth + the scrape allow-list.
 - **`shared/`** — config, pooled DB access, and embeddings used by both ingestion and RAG.
 
@@ -51,8 +58,8 @@ See **[FOUNDATION.md](FOUNDATION.md)** for the full design and architecture deci
 
 ## Stack
 
-Python (uv) · FastAPI · Next.js · PostgreSQL + pgvector · Ollama (Qwen3-Embedding-8B,
-4096-dim) · DeepSeek (generation) · nginx + Let's Encrypt.
+Python (uv) · FastAPI · Next.js · PostgreSQL + pgvector · OpenAI text-embedding-3-large
+(3072-dim; Ollama/Qwen3 fallback) · DeepSeek (generation) · nginx + Let's Encrypt.
 
 ## Production hardening
 
@@ -65,8 +72,10 @@ Python (uv) · FastAPI · Next.js · PostgreSQL + pgvector · Ollama (Qwen3-Embe
   source citations such as `[1]`.
 - Admin endpoints are ministry-scoped, rate-limited, parameterized, and use secure
   session cookies.
-- Reviewed-answer cache is invalidated on admin create/update/delete so newly
-  curated answers are served immediately.
+- Approved official responses are inserted into both the instant-answer path and
+  `official_response_chunks`, so human-approved guidance joins semantic RAG retrieval.
+- Reviewed-answer and official-response caches are invalidated on admin mutations so
+  newly curated answers are served immediately.
 - CI in `.github/workflows/test.yml` runs the Python test suite plus webchat type
   checks/build on push and pull requests.
 
@@ -98,7 +107,8 @@ the API runs on `8770` and Next.js runs on `3055` via `npm run dev`.
 
 ```bash
 # Knowledge Store: Postgres 16 + pgvector, database `ruzivo` (see shared/db/schema.sql)
-# Embeddings: Ollama serving qwen3-embedding:8b (DeepSeek key at ~/.secrets/deepseek-api-key)
+# Embeddings: OpenAI text-embedding-3-large (key at ~/.secrets/openai-api-key; Ollama fallback)
+# Generation: DeepSeek (key at ~/.secrets/deepseek-api-key)
 uv sync
 uv run python registry/load_registry.py
 uv run python -m ingestion.pipeline --ministry ict

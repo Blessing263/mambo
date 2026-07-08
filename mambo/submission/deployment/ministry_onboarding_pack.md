@@ -31,14 +31,25 @@ without developer help.
   citation coverage ≥ 80%; broken-link rate = 0).
 - Fallback/escalation path and the office that owns pilot queries.
 
-## 4. Review cadence
+## 4. Staff roles and official responses
+
+- Create at least one **agent** account for drafting answers from citizen issue
+  queues.
+- Create at least one **supervisor** account for approving or archiving official
+  responses.
+- Agree the citation rule: approved responses need at least one ministry-approved
+  source or policy reference.
+- Weekly during pilot, review the issue inbox buckets: coverage gaps, poor
+  feedback, safety/declined questions, and published official answers.
+
+## 5. Review cadence
 
 - **Quarterly** contact + source re-verification.
 - **On change:** re-crawl when the ministry homepage structure changes; re-verify
   contacts when a source link breaks (`check_citation_links.py`).
 - Eval re-run after each material corpus change (`scripts/evaluate_mambo.py`).
 
-## 5. Launch checklist
+## 6. Launch checklist
 
 - [ ] Domains allow-listed; seed URLs confirmed.
 - [ ] At least one ingestion run succeeds for the ministry
@@ -46,6 +57,8 @@ without developer help.
 - [ ] Chunk count > 0 and embedding completeness = 100%
       (`scripts/validate_corpus.py`).
 - [ ] Handoff contact confirmed; `last_verified_at` set; review owner assigned.
+- [ ] Agent and supervisor accounts created; approval workflow smoke-tested.
+- [ ] At least one official response approved and verified in the citizen chat.
 - [ ] Eval questions for the ministry route correctly and cite the ministry's docs.
 - [ ] Cited source URLs resolve (`scripts/check_citation_links.py`).
 - [ ] Ministry marked `enabled: true`; smoke test on the live assistant passes.

@@ -44,9 +44,9 @@ need consistent, cited, first-line answers. A mobile-first, free, always-on
 assistant reaches the widest audience.
 
 **What Mambo is.** A retrieval-augmented assistant that answers in plain language
-using **only** the retrieved documents from an allow-listed corpus of ministry,
-agency, tax, education, and public legal sources, with citations, an honest
-**evidence-status badge** on every answer, structured
+using **only** retrieved documents and approved ministry guidance from an
+allow-listed corpus of ministry, agency, tax, education, and public legal sources,
+with citations, an honest **evidence-status badge** on every answer, structured
 **service-journey cards** for common tasks, and a **ministry handoff card** when it
 cannot answer. *Mambo* is a Shona word for "king"; here it is framed as the
 **king of information**.
@@ -59,8 +59,8 @@ open-source stack with a CCE roadmap (sovereign, local). It is
 whole-of-government-ready: led from the ICT use case, currently covering 5
 ministries plus 4 adjacent sources, and designed so additional ministries plug in
 via a curated registry. The product includes a **customer-service portal** for
-covered ministries to see what citizens ask, curate vetted answers, and handle
-handoffs.
+covered ministries to see what citizens ask, triage ministry-specific issue queues,
+approve official responses, and handle handoffs.
 
 # 2. Technical Design & Product Logic
 
@@ -83,7 +83,7 @@ generate or fall back → trust layer`. The safety guard abstains before retriev
 | Component | Choice | Why |
 |---|---|---|
 | Generation | DeepSeek (flash), swappable | Phase 2 self-host an open-weight model on the CCE — no code change |
-| Embeddings | Qwen3-Embedding-8B (4096-dim), self-hosted (Ollama) | Multilingual → Shona/Ndebele is an addition, not a re-embed |
+| Embeddings | OpenAI text-embedding-3-large (3072-dim), with Ollama/Qwen3 fallback | Multilingual retrieval now; self-hosted embedding remains the CCE path |
 | Knowledge store | PostgreSQL 16 + pgvector | Runs on a cheap cloud box *and* a Ministry server — one tech, two homes |
 | Retrieval | Ministry-scoped cosine + recency boost | Newest version of an amended law wins |
 | Webchat | Next.js 14, streaming SSE, mobile-first | Low-bandwidth, always-on |
@@ -107,18 +107,22 @@ legal, personal-data, political, prompt-injection); **service-journey cards** fo
 six common tasks; **ministry handoff cards** plus a persistent **"Talk to a human"**
 flow — covered-source contacts (call / WhatsApp / email / office hours, where
 available in the registry) one tap away at any time, not only when an answer falls back; switching ministry
-focus starts a **fresh conversation** (no cross-ministry context bleed);
+focus starts a **fresh conversation** (no cross-ministry context bleed), and the
+starter service cards/questions filter to the chosen ministry or linked agency;
 **live "thinking" steps** that narrate the retrieval; streaming; mobile-first; light/dark themes; a **designed national
 identity** (Spectral/Hanken typography, flag-palette tokens, a Seal/Mark/Wordmark);
 and a **ministry customer-service portal** (`/admin`) with per-ministry login,
-a scoped analytics dashboard (top questions, fallback rate, feedback), and
-**reviewed-answer curation** — staff vet the top questions, and citizens get those
-answers **instantly** (sub-second, zero LLM cost) via the reviewed-answer
-short-circuit.
+a role-aware command centre, issue inbox (coverage gaps, poor feedback,
+safety/declined questions, official answers), and an **official-response workflow**:
+agents draft ministry answers, supervisors approve/archive them, and approved
+responses are published into both the instant-answer path and semantic RAG
+retrieval. Legacy reviewed-answer curation remains supported for sub-second,
+zero-LLM answers.
 
 **Measured results (not asserted).** A fresh build from a clean checkout boots;
-**80 backend tests pass, with 1 integration test skipped by default**. On the
-corpus and a 32-question citizen-query set:
+the backend suite currently collects **81 tests**, and focused regression checks
+for schema, rescue routing, official answers and web production build pass in the
+current deployment environment. On the corpus and a 32-question citizen-query set:
 
 | Metric | Result |
 |---|---|
@@ -127,7 +131,7 @@ corpus and a 32-question citizen-query set:
 | Corpus integrity checks | 8 / 8 pass |
 | Citation link liveness (sample) | 8 / 8 resolved |
 | Allow-listed-source-only retrieval | True (web verifier off by default) |
-| Reviewed-answer latency | <1 s in the reviewed-answer path (zero LLM call) |
+| Human-approved answer latency | <1 s in the exact-match path (zero LLM call) |
 
 Honest gaps are disclosed, not hidden: education (3 chunks) and ZimLII (1) are
 thin; Shona/Ndebele router accuracy is 60% (Phase 2; embeddings are already
@@ -137,7 +141,8 @@ multilingual).
 
 **What is delivered.** A working **two-sided** product: a citizen-facing RAG
 assistant (ingestion → retrieve → generate → trust) AND a ministry customer-service
-portal (per-ministry login, analytics dashboard, reviewed-answer curation). Both
+portal (per-ministry login, role-aware issue queues, official-response approval,
+analytics dashboard, reviewed-answer compatibility). Both
 are deployed and demonstrable; the codebase includes 80 passing backend tests,
 a full evidence pack, and a designed national identity system.
 
@@ -147,14 +152,15 @@ a full evidence pack, and a designed national identity system.
 |---|---|---|
 | 1–2 | Harden | Close remaining security/schema/test items; run full RAG eval on resourced compute; fix accessibility "pending" items |
 | 3–4 | Expand | Close coverage gaps (re-crawl education; expand ZimLII); add Shona/Ndebele registry keywords; measured sn/nd pilot |
-| 5–8 | Pilot | Home Affairs pilot: confirm sources + handoff contacts, reviewed-answer cache, controlled user group, weekly review, go/no-go |
+| 5–8 | Pilot | Home Affairs pilot: confirm sources + handoff contacts, role-based review, approved-response cache, controlled user group, weekly review, go/no-go |
 
 **ZCHPC CCE roadmap.** The stack is CCE-ready by design (open-source, self-hostable,
 swappable model interface). On the CCE we run PostgreSQL+pgvector (the Knowledge
-Store), bulk embedding jobs on GPU (`ingestion/embed_bulk.py` already targets a
-remote GPU Ollama endpoint), a self-hosted open-weight generation model behind the
-swappable interface, and the evaluation pipeline. Migration is a re-point of
-`OLLAMA_BASE_URL` / `DEEPSEEK_BASE_URL` — no code change.
+Store), bulk embedding jobs on GPU, a self-hosted open-weight generation model
+behind the swappable interface, and the evaluation pipeline. The current deployment
+uses OpenAI 3072-dim embeddings for retrieval quality; the CCE migration either
+keeps that vector dimension with a compatible local endpoint or performs a planned
+re-embed into a local model/dimension using the existing `embed_bulk.py` path.
 
 | CCE milestone | Outcome |
 |---|---|
@@ -178,7 +184,7 @@ mobile-first low-bandwidth is the user-facing strategy.
 | Consent | **Data-use consent checkbox** before the first question: asking is blocked until it is ticked; the choice is stored client-side (versioned key, timestamped) and is revocable by unticking — no account or server-side identity is created |
 | Data minimisation | Query log keeps only needed fields; `client_ip`/`user_agent` retention-bounded |
 | Retention & deletion | Defined retention window + deletion workflow (planned PII redaction) |
-| Access control | Restricted log access by role |
+| Access control | Session-cookie admin login, ministry-scoped SQL, and role separation for agent/supervisor workflows |
 | Transparency | Inline notice beside the consent checkbox: do not enter ID numbers, phone numbers, or medical information |
 | Open-data release | **Not** claimed for query logs |
 
@@ -186,11 +192,12 @@ mobile-first low-bandwidth is the user-facing strategy.
 the official app; per-IP rate limiting + concurrent-stream cap; bot user-agent
 blocklist + behaviour/entropy checks; validated input sizes; docs/redoc disabled in
 production; secrets never committed. The deterministic abstention guard and
-allow-listed-source retrieval hardens the content layer. (80 passing backend
-tests cover nonce, abstention, security, schema, feedback, sanitisation, and the
-reviewed-answer streaming path.) The admin
+allow-listed-source retrieval hardens the content layer. The backend test suite
+covers nonce, abstention, security, schema, feedback, sanitisation, and the
+reviewed-answer streaming path. The admin
 portal adds **session-cookie auth** (bcrypt, httpOnly, SameSite-Lax, ministry-scoped
-SQL so staff only see their own data; rate-limited login; generic 401).
+SQL so staff only see their own data; rate-limited login; generic 401), and
+server-side supervisor enforcement for approval/archive actions.
 
 **Responsible AI.** Mandatory citations; a confidence threshold below which Mambo
 does not guess; the evidence-status badge; abstention for out-of-scope/unsafe
@@ -218,10 +225,10 @@ keystone) → embeddable widget on live ministry sites + low-bandwidth channels
 (WhatsApp).
 
 **Maintainability.** Incremental refresh re-ingests only changed documents; a
-quarterly re-verification cadence; the **reviewed-answer cache** — now live in the
-admin portal, where ministry staff curate the top questions and citizens get those
-answers instantly (sub-second, no LLM call); monitoring that drives what to fix
-next.
+quarterly re-verification cadence; the **official-response pipeline** — now live in
+the admin portal, where agents draft from top citizen questions, supervisors approve
+the ministry wording, and citizens get exact matches instantly while approved
+responses also strengthen RAG retrieval; monitoring that drives what to fix next.
 
 ---
 

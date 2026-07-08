@@ -14,6 +14,15 @@ const statuses = [
   { value: "answered", label: "Answered" },
 ];
 
+const issues = [
+  { value: "", label: "All issues", icon: "inbox" },
+  { value: "coverage_gap", label: "Coverage gaps", icon: "playlist_add" },
+  { value: "quality_issue", label: "Poor feedback", icon: "thumb_down" },
+  { value: "safety_escalation", label: "Safety/declined", icon: "policy" },
+  { value: "official_answer", label: "Official", icon: "verified" },
+  { value: "answered", label: "Answered", icon: "check_circle" },
+];
+
 const badge: Record<string, { label: string; bg: string; color: string }> = {
   answered: { label: "Answered", bg: "var(--accent-light)", color: "var(--accent-text)" },
   partial: { label: "Partial", bg: "var(--gold-light)", color: "var(--gold)" },
@@ -21,34 +30,55 @@ const badge: Record<string, { label: string; bg: string; color: string }> = {
   declined: { label: "Declined", bg: "var(--bg-hover)", color: "var(--text-secondary)" },
 };
 
+const issueBadge: Record<string, { label: string; bg: string; color: string }> = {
+  coverage_gap: { label: "Coverage gap", bg: "var(--gold-light)", color: "var(--gold)" },
+  quality_issue: { label: "Poor feedback", bg: "var(--red-light)", color: "var(--red)" },
+  safety_escalation: { label: "Safety", bg: "var(--red-light)", color: "var(--red)" },
+  official_answer: { label: "Official", bg: "var(--accent-light)", color: "var(--accent-text)" },
+  answered: { label: "Answered", bg: "var(--bg-hover)", color: "var(--text-secondary)" },
+};
+
 export default function QuestionInboxPage() {
   const [rows, setRows] = useState<AdminQuestion[]>([]);
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("");
+  const [issue, setIssue] = useState("");
 
-  function refresh(nextQ = q, nextStatus = status) {
-    getQuestions(80, 0, nextQ, nextStatus).then(setRows).catch(() => {});
+  function refresh(nextQ = q, nextStatus = status, nextIssue = issue) {
+    getQuestions(80, 0, nextQ, nextStatus, nextIssue).then(setRows).catch(() => {});
   }
 
-  useEffect(() => { refresh("", ""); }, []);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const initialIssue = params.get("issue") || "";
+    const initialStatus = params.get("status") || "";
+    setIssue(initialIssue);
+    setStatus(initialStatus);
+    refresh("", initialStatus, initialIssue);
+  }, []);
 
   function updateSearch(value: string) {
     setQ(value);
-    refresh(value, status);
+    refresh(value, status, issue);
   }
 
   function updateStatus(value: string) {
     setStatus(value);
-    refresh(q, value);
+    refresh(q, value, issue);
+  }
+
+  function updateIssue(value: string) {
+    setIssue(value);
+    refresh(q, status, value);
   }
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end gap-3">
         <div>
-          <h1 className="font-display text-[20px] font-semibold" style={{ color: "var(--text-primary)" }}>Question inbox</h1>
+          <h1 className="font-display text-[20px] font-semibold" style={{ color: "var(--text-primary)" }}>Issue inbox</h1>
           <p className="mt-1 text-[12px]" style={{ color: "var(--text-tertiary)" }}>
-            Triage citizen demand and promote repeated gaps into official responses.
+            Triage citizen demand by ministry issue type and promote repeated gaps into official responses.
           </p>
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
@@ -71,6 +101,20 @@ export default function QuestionInboxPage() {
         </div>
       </div>
 
+      <div className="flex flex-wrap gap-1">
+        {issues.map((item) => (
+          <button
+            key={item.value}
+            onClick={() => updateIssue(item.value)}
+            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-medium"
+            style={issue === item.value ? { background: "var(--accent-light)", color: "var(--accent-text)" } : { color: "var(--text-secondary)" }}
+          >
+            <span className="material-symbols" aria-hidden="true" style={{ fontSize: 15 }}>{item.icon}</span>
+            {item.label}
+          </button>
+        ))}
+      </div>
+
       <Surface style={{ padding: 16 }}>
         {rows.length === 0 ? (
           <p className="py-6 text-center text-[13px]" style={{ color: "var(--text-tertiary)" }}>No matching questions.</p>
@@ -78,18 +122,20 @@ export default function QuestionInboxPage() {
           <ul className="divide-y" style={{ borderColor: "var(--border-light)" }}>
             {rows.map((r) => {
               const b = badge[r.evidence_status] ?? badge.unsupported;
+              const ib = issueBadge[r.issue_type] ?? issueBadge.coverage_gap;
               return (
                 <li key={r.id} className="grid gap-3 py-3 md:grid-cols-[1fr_auto] md:items-center">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: ib.bg, color: ib.color }}>
+                        {ib.label}
+                      </span>
                       <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: b.bg, color: b.color }}>
                         {b.label}
                       </span>
-                      {r.reviewed && (
-                        <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: "var(--accent-light)", color: "var(--accent-text)" }}>
-                          Official
-                        </span>
-                      )}
+                      <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize" style={{ background: "var(--bg-hover)", color: "var(--text-secondary)" }}>
+                        {r.priority}
+                      </span>
                       <span className="text-[10px]" style={{ color: "var(--text-tertiary)" }}>
                         {r.asked_at ? new Date(r.asked_at).toLocaleString() : ""}
                       </span>

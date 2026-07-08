@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import { askStream } from "@/lib/api";
 import type { ChatMessage, Ministry, StatusEvent } from "@/lib/types";
-import { JOURNEYS, getJourney } from "@/lib/journeys";
+import { getJourney, journeysForMinistry, relatedMinistryIds } from "@/lib/journeys";
 import {
   AnswerText, CitationCard, ContactCard, EvidenceHeader, ReferralCard,
   JourneyCard, AnswerActions, MinistryBadge,
@@ -13,10 +13,15 @@ import { Surface, Chip } from "./ui";
 import { MinistryPicker } from "./MinistryPicker";
 
 const EXAMPLES = [
-  { q: "What are my rights under the data protection law?", icon: "shield" },
-  { q: "How do I import a car from abroad?", icon: "directions_car" },
-  { q: "What taxes do employers pay?", icon: "payments" },
-  { q: "What is the National AI Strategy?", icon: "smart_toy" },
+  { q: "How do I replace a lost national ID?", icon: "badge", ministries: ["home_affairs"] },
+  { q: "How do I apply for a passport?", icon: "card_travel", ministries: ["home_affairs"] },
+  { q: "How do I register a birth certificate?", icon: "child_care", ministries: ["home_affairs"] },
+  { q: "How do I import a car from abroad?", icon: "directions_car", ministries: ["finance", "zimra"] },
+  { q: "What taxes do employers pay?", icon: "payments", ministries: ["finance", "zimra"] },
+  { q: "How do I get a tax clearance certificate?", icon: "receipt_long", ministries: ["finance", "zimra"] },
+  { q: "How do I check exam results or replace a certificate?", icon: "school", ministries: ["education", "zimsec"] },
+  { q: "What are my rights under the data protection law?", icon: "shield", ministries: ["ict", "veritas", "zimlii"] },
+  { q: "What is the National AI Strategy?", icon: "smart_toy", ministries: ["ict"] },
 ];
 
 // Guided question sent when a journey tile is tapped (matches the journey keywords).
@@ -148,6 +153,10 @@ function Landing({
   consented: boolean; consentNudge: boolean; onConsent: (on: boolean) => void;
 }) {
   const canSend = !busy && !!value.trim() && ministriesLoaded;
+  const visibleJourneys = journeysForMinistry(selected);
+  const related = relatedMinistryIds(selected);
+  const visibleExamples = selected ? EXAMPLES.filter((ex) => ex.ministries.some((m) => related.includes(m))) : EXAMPLES.slice(0, 6);
+  const selectedName = selected ? byId[selected]?.short_name || byId[selected]?.name : null;
   return (
     <div className="scroll-thin flex-1 overflow-y-auto">
       <div className="mx-auto w-full max-w-[44rem] px-4 py-8 sm:py-12 animate-fade-up">
@@ -193,22 +202,32 @@ function Landing({
         </div>
 
         {/* Journey grid */}
-        <div className="mb-2 text-[12px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-tertiary)" }}>Common services</div>
-        <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-          {JOURNEYS.map((j, i) => (
-            <JourneyTile key={j.id} journey={j} byId={byId} index={i} onPick={() => onAsk(JOURNEY_PROMPT[j.id])} />
-          ))}
-        </div>
+        {visibleJourneys.length > 0 && (
+          <>
+            <div className="mb-2 text-[12px] font-semibold uppercase tracking-wide" style={{ color: "var(--text-tertiary)" }}>
+              {selectedName ? `${selectedName} services` : "Common services"}
+            </div>
+            <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+              {visibleJourneys.map((j, i) => (
+                <JourneyTile key={j.id} journey={j} byId={byId} index={i} onPick={() => onAsk(JOURNEY_PROMPT[j.id])} />
+              ))}
+            </div>
+          </>
+        )}
 
         {/* Examples */}
-        <div className="mt-6 text-[12px] mb-2" style={{ color: "var(--text-tertiary)" }}>Or try a question:</div>
-        <div className="flex flex-wrap gap-2">
-          {EXAMPLES.map((ex) => (
-            <Chip key={ex.q} onClick={() => onAsk(ex.q)}>
-              <span className="material-symbols" style={{ fontSize: 14 }}>{ex.icon}</span>{ex.q}
-            </Chip>
-          ))}
-        </div>
+        {visibleExamples.length > 0 && (
+          <>
+            <div className="mt-6 text-[12px] mb-2" style={{ color: "var(--text-tertiary)" }}>Or try a question:</div>
+            <div className="flex flex-wrap gap-2">
+              {visibleExamples.map((ex) => (
+                <Chip key={ex.q} onClick={() => onAsk(ex.q)}>
+                  <span className="material-symbols" style={{ fontSize: 14 }}>{ex.icon}</span>{ex.q}
+                </Chip>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

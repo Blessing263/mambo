@@ -24,6 +24,25 @@ from .security import _ratelimit_check
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
+EVIDENCE_STATUS_SQL = (
+    "coalesce(evidence_status, CASE WHEN confident AND answered "
+    "THEN 'answered' ELSE 'unsupported' END)"
+)
+ISSUE_TYPE_SQL = f"""CASE
+    WHEN {EVIDENCE_STATUS_SQL} = 'declined' THEN 'safety_escalation'
+    WHEN feedback < 0 THEN 'quality_issue'
+    WHEN reviewed THEN 'official_answer'
+    WHEN {EVIDENCE_STATUS_SQL} IN ('partial', 'unsupported') THEN 'coverage_gap'
+    ELSE 'answered'
+END"""
+ISSUE_PRIORITY_SQL = f"""CASE
+    WHEN {EVIDENCE_STATUS_SQL} = 'declined' THEN 'urgent'
+    WHEN feedback < 0 THEN 'high'
+    WHEN {EVIDENCE_STATUS_SQL} IN ('partial', 'unsupported') THEN 'high'
+    WHEN reviewed THEN 'published'
+    ELSE 'normal'
+END"""
+
 
 def _staff_dict(s: Staff) -> dict:
     return {"id": s.id, "email": s.email, "name": s.name, "role": s.role,
@@ -82,11 +101,12 @@ def stats(request: Request, days: int = 30, staff: Staff = Depends(current_staff
     if not mid:
         return {"total": 0, "answered": 0, "fallback_rate": None, "avg_feedback": None,
                 "token_count": 0, "avg_latency": None,
-                "top_questions": [], "top_unanswered": [], "series": []}
+                "top_questions": [], "top_unanswered": [], "series": [],
+                "issue_counts": {}, "response_counts": {}}
     clamped_days = max(1, min(days, 365))
     with get_conn() as conn, conn.cursor() as cur:
-        cur.execute("""SELECT count(*) AS total,
-               count(*) FILTER (WHERE coalesce(evidence_status, CASE WHEN confident AND answered THEN 'answered' ELSE 'unsupported' END) = 'answered') AS answered,
+        cur.execute(f"""SELECT count(*) AS total,
+               count(*) FILTER (WHERE {EVIDENCE_STATUS_SQL} = 'answered') AS answered,
                avg(feedback) FILTER (WHERE feedback IS NOT NULL) AS avg_feedback,
                coalesce(sum(token_count), 0) AS token_count,
                coalesce(round(avg(latency_ms) FILTER (WHERE latency_ms > 0)), 0) AS avg_latency
@@ -98,11 +118,10 @@ def stats(request: Request, days: int = 30, staff: Staff = Depends(current_staff
                AND asked_at > now() - make_interval(days => %s)
                GROUP BY question ORDER BY n DESC LIMIT 10;""", (mid, clamped_days))
         top_q = cur.fetchall()
-        cur.execute("""SELECT question, count(*) AS n FROM query_log
+        cur.execute(f"""SELECT question, count(*) AS n FROM query_log
                WHERE %s = ANY(detected_ministries)
                AND asked_at > now() - make_interval(days => %s)
-                 AND coalesce(evidence_status, CASE WHEN confident AND answered THEN 'answered' ELSE 'unsupported' END)
-                     IN ('partial', 'unsupported', 'declined')
+                 AND {EVIDENCE_STATUS_SQL} IN ('partial', 'unsupported', 'declined')
                GROUP BY question ORDER BY n DESC LIMIT 10;""", (mid, clamped_days))
         top_u = cur.fetchall()
         cur.execute("""SELECT date_trunc('day', asked_at) AS d, count(*) AS n FROM query_log
@@ -110,6 +129,21 @@ def stats(request: Request, days: int = 30, staff: Staff = Depends(current_staff
                AND asked_at > now() - make_interval(days => %s)
                GROUP BY d ORDER BY d;""", (mid, clamped_days))
         series = cur.fetchall()
+        cur.execute(f"""SELECT
+                 count(*) FILTER (WHERE {ISSUE_TYPE_SQL} = 'coverage_gap') AS coverage_gap,
+                 count(*) FILTER (WHERE {ISSUE_TYPE_SQL} = 'quality_issue') AS quality_issue,
+                 count(*) FILTER (WHERE {ISSUE_TYPE_SQL} = 'safety_escalation') AS safety_escalation,
+                 count(*) FILTER (WHERE {ISSUE_TYPE_SQL} = 'official_answer') AS official_answer,
+                 count(*) FILTER (WHERE {ISSUE_TYPE_SQL} = 'answered') AS answered
+               FROM query_log
+               WHERE %s = ANY(detected_ministries)
+               AND asked_at > now() - make_interval(days => %s);""", (mid, clamped_days))
+        issue_counts = cur.fetchone()
+        cur.execute("""SELECT status, count(*) AS n
+               FROM official_responses
+               WHERE ministry_id = %s
+               GROUP BY status;""", (mid,))
+        response_rows = cur.fetchall()
     total, answered = agg["total"], agg["answered"]
     return {
         "total": total,
@@ -121,6 +155,14 @@ def stats(request: Request, days: int = 30, staff: Staff = Depends(current_staff
         "top_questions": [{"question": r["question"], "count": r["n"]} for r in top_q],
         "top_unanswered": [{"question": r["question"], "count": r["n"]} for r in top_u],
         "series": [{"day": r["d"].isoformat() if r["d"] else None, "count": r["n"]} for r in series],
+        "issue_counts": {
+            "coverage_gap": int(issue_counts["coverage_gap"] or 0),
+            "quality_issue": int(issue_counts["quality_issue"] or 0),
+            "safety_escalation": int(issue_counts["safety_escalation"] or 0),
+            "official_answer": int(issue_counts["official_answer"] or 0),
+            "answered": int(issue_counts["answered"] or 0),
+        },
+        "response_counts": {r["status"]: int(r["n"]) for r in response_rows},
     }
 
 
@@ -162,6 +204,7 @@ def question_inbox(
     offset: int = 0,
     q: str = "",
     status: str = "",
+    issue: str = "",
     staff: Staff = Depends(current_staff),
 ):
     _ratelimit_check(request, "/admin/questions")
@@ -176,14 +219,19 @@ def question_inbox(
         filters.append("question ILIKE %s")
         params.append(f"%{q.strip()}%")
     if status.strip():
-        filters.append("coalesce(evidence_status, CASE WHEN confident AND answered THEN 'answered' ELSE 'unsupported' END) = %s")
+        filters.append(f"{EVIDENCE_STATUS_SQL} = %s")
         params.append(status.strip())
+    if issue.strip():
+        filters.append(f"{ISSUE_TYPE_SQL} = %s")
+        params.append(issue.strip())
     params += [limit, offset]
     with get_conn() as conn, conn.cursor() as cur:
         cur.execute(
             f"""SELECT id, asked_at, question, detected_ministries, confident, answered,
-                      coalesce(evidence_status, CASE WHEN confident AND answered THEN 'answered' ELSE 'unsupported' END) AS evidence_status,
-                      reviewed, feedback, latency_ms
+                      {EVIDENCE_STATUS_SQL} AS evidence_status,
+                      reviewed, feedback, latency_ms,
+                      {ISSUE_TYPE_SQL} AS issue_type,
+                      {ISSUE_PRIORITY_SQL} AS priority
                FROM query_log
                WHERE {' AND '.join(filters)}
                ORDER BY asked_at DESC LIMIT %s OFFSET %s;""",
@@ -202,6 +250,8 @@ def question_inbox(
             "reviewed": r["reviewed"],
             "feedback": r["feedback"],
             "latency_ms": r["latency_ms"],
+            "issue_type": r["issue_type"],
+            "priority": r["priority"],
         }
         for r in rows
     ]
@@ -329,6 +379,11 @@ def _official_dict(r: dict) -> dict:
     }
 
 
+def _require_supervisor(staff: Staff) -> None:
+    if staff.role != "supervisor":
+        raise HTTPException(status_code=403, detail="Supervisor role required")
+
+
 def _record_version(cur, old: dict | None, new_status: str, new_answer: str,
                     staff_id: str, note: str | None = None) -> None:
     cur.execute(
@@ -410,6 +465,8 @@ def create_official_response(body: OfficialIn, request: Request, staff: Staff = 
     if not staff.ministry_id:
         raise HTTPException(status_code=403, detail="No ministry assigned")
     status = body.status or "draft"
+    if status in ("approved", "archived"):
+        _require_supervisor(staff)
     if status == "approved" and not body.citations:
         raise HTTPException(status_code=400, detail="Approved responses need at least one citation")
     with get_conn() as conn, conn.cursor() as cur:
@@ -490,6 +547,8 @@ def _set_official_status(rid: str, status: OfficialStatus, request: Request,
         old = _response_row(cur, rid, staff.ministry_id)
         if not old:
             raise HTTPException(status_code=404, detail="Not found")
+        if status in ("approved", "archived"):
+            _require_supervisor(staff)
         if status == "approved" and not old["citations"]:
             raise HTTPException(status_code=400, detail="Approved responses need at least one citation")
         if status == "pending_review":

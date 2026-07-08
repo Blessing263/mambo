@@ -107,6 +107,9 @@ Tags: **[Demo]** build now · **[P2]** Phase 2 · **[Future]** later.
 - **Ministry picker** — cards for covered ministries and adjacent sources **[Demo]**
 - **"Find the right office" router** — describe a problem → routed to the exact
   ministry + department + form. *Flagship demo feature.* **[Demo]**
+- **Ministry-aware starter suggestions** — service cards and starter questions
+  filter to the selected ministry or linked agency (e.g. Finance → ZIMRA,
+  Education → ZIMSEC). **[Demo]**
 - Smart contact/directory tool (phone, WhatsApp, address, hours, map) **[Demo: ICT]**
 - "All covered sources" free-ask mode **[Demo]**
 - Per-ministry theming **[P2]**
@@ -165,10 +168,11 @@ The query path, per question:
   demo. Sits behind a **swappable model interface** — Phase 2 can swap in a
   self-hosted open-weight model (DeepSeek or other) on Ministry servers with no
   change to Modules 1 or 3.
-- **Embeddings (for search):** Qwen3-Embedding-8B, a multilingual, self-hosted
-  embedding model served via Ollama. Separate job from generation. Multilingual
-  embeddings help Phase 2 Shona/Ndebele work, but local-language parity is not
-  claimed yet.
+- **Embeddings (for search):** OpenAI text-embedding-3-large (3072-dim) as the
+  priority provider, with self-hosted Qwen3-Embedding-8B via Ollama as fallback
+  behind the same interface (`shared/embeddings.py`). Separate job from
+  generation. Both are multilingual, which helps Phase 2 Shona/Ndebele work,
+  but local-language parity is not claimed yet.
 
 ### The router ("traffic cop")
 Before retrieval, classify the question to one or more ministries (using the
@@ -180,8 +184,12 @@ name the source ministry in the answer. This powers "Find the right office."
 - **Confidence threshold:** if retrieval doesn't clearly cover the question, do not
   guess — say so and route to the Ministry's contact line.
 - **Topic-lock:** politely refuse anything outside government/ministry scope.
-- **Reviewed-answer cache (P2):** humans vet the top questions per ministry so
-  the most-seen answers can be served consistently without an LLM call.
+- **Official-response workflow:** ministry agents draft answers from citizen
+  questions; supervisors approve them. Approved responses enter the instant-answer
+  path and are embedded into `official_response_chunks` so they participate in RAG
+  retrieval with provenance and version history.
+- **Reviewed-answer cache:** legacy curated answers remain supported for instant
+  responses and migration.
 - **Question log:** every question recorded → feeds the Phase-2 analytics ("what
   citizens ask most") and quality review. (Public questions only; no private data.)
 
@@ -293,7 +301,7 @@ chunk:
 | Webchat | Next.js + assistant-ui | Components we own; MIT; mobile-first |
 | RAG API | Small backend service | Hosts route→retrieve→augment→generate→trust |
 | Generation LLM | DeepSeek-compatible hosted generation | Behind swappable interface; self-host in P2 |
-| Embeddings | Qwen3-Embedding-8B via Ollama | Multilingual retrieval layer; local-language parity still P2 |
+| Embeddings | OpenAI text-embedding-3-large (Ollama/Qwen3 fallback) | Multilingual retrieval layer; local-language parity still P2 |
 | Knowledge Store | Postgres + pgvector | Cloud for demo → Ministry server for P2 |
 | Ingestion | Batch pipeline (scheduled) | Scrape/discover/parse/OCR/chunk/embed/load |
 | Repo | Monorepo, one repo / four folders | Easy Ministry handover |
@@ -321,6 +329,8 @@ mambo/
 - Webchat **[Demo]** features (above), standalone branded page.
 - RAG: route → retrieve → DeepSeek → trust layer, with citations.
 - Ingestion: full proper pipeline, run to seed the covered sources.
+- Ministry portal: role-aware command centre, issue inbox, official-response
+  workflow, sources/handoff settings, and reviewed-answer compatibility.
 - Hosting: one cheap cloud instance + hosted Postgres.
 - Goal: a real national-feeling service to show the Minister on a link.
 
@@ -328,8 +338,9 @@ mambo/
 - All ~20 ministries.
 - Swap LLM to Ministry-hosted open-weight model; move Postgres to Ministry servers.
 - Shona / Ndebele (translation step in RAG; embeddings already multilingual).
-- Admin panel (staff upload docs → triggers ingestion; no developer needed).
-- Analytics dashboard + reviewed-answer cache.
+- Expand the admin panel with document upload/approval that triggers ingestion
+  without developer help.
+- Cross-ministry analytics, supervisor QA reports, and service-level dashboards.
 - Embeddable widget on the live Ministry website.
 - Remaining interactive tools (wizards, eligibility, summaries, etc.).
 

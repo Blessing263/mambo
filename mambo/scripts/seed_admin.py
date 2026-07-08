@@ -143,14 +143,19 @@ def main() -> None:
         for m in REGISTRY["ministries"]:
             if not m.get("enabled", True):
                 continue
-            email = f"{m['id']}@demo.mambo"
-            cur.execute(
-                """INSERT INTO staff (ministry_id, email, name, role, password_hash)
-                   VALUES (%s, %s, %s, 'agent', %s)
-                   ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash,
-                                                     name = EXCLUDED.name;""",
-                (m["id"], email, f"{m['short_name']} Demo Agent", pw_hash),
-            )
+            accounts = [
+                (f"{m['id']}@demo.mambo", "agent", "Agent"),
+                (f"{m['id']}.supervisor@demo.mambo", "supervisor", "Supervisor"),
+            ]
+            for email, role, label in accounts:
+                cur.execute(
+                    """INSERT INTO staff (ministry_id, email, name, role, password_hash)
+                       VALUES (%s, %s, %s, %s, %s)
+                       ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash,
+                                                         name = EXCLUDED.name,
+                                                         role = EXCLUDED.role;""",
+                    (m["id"], email, f"{m['short_name']} Demo {label}", role, pw_hash),
+                )
         # sample curated answers (idempotent: delete by (ministry, question_norm) then insert)
         for r in SAMPLE_REVIEWED:
             qn = normalize_question(r["question"])

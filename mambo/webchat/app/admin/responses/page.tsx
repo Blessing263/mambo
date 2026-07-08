@@ -5,11 +5,12 @@ import {
   approveOfficialResponse,
   archiveOfficialResponse,
   createOfficialResponse,
+  getMe,
   getOfficialResponses,
   submitOfficialResponse,
   updateOfficialResponse,
 } from "@/lib/adminApi";
-import type { OfficialResponse, OfficialResponseStatus } from "@/lib/types";
+import type { OfficialResponse, OfficialResponseStatus, Staff } from "@/lib/types";
 import { PrimaryButton, Surface } from "@/components/ui";
 
 const inputCls =
@@ -44,6 +45,7 @@ function parseCitations(text: string) {
 }
 
 export default function OfficialResponsesPage() {
+  const [staff, setStaff] = useState<Staff | null>(null);
   const [rows, setRows] = useState<OfficialResponse[]>([]);
   const [status, setStatus] = useState<"" | OfficialResponseStatus>("");
   const [q, setQ] = useState("");
@@ -55,8 +57,12 @@ export default function OfficialResponsesPage() {
   }
 
   useEffect(() => {
-    refresh("", "");
-    const question = new URLSearchParams(window.location.search).get("question");
+    getMe().then(setStaff).catch(() => {});
+    const params = new URLSearchParams(window.location.search);
+    const initialStatus = (params.get("status") || "") as "" | OfficialResponseStatus;
+    setStatus(initialStatus);
+    refresh(initialStatus, "");
+    const question = params.get("question");
     if (question) setEditing({ question, answer: "", citations: [], citationText: "", status: "draft" });
   }, []);
 
@@ -64,6 +70,8 @@ export default function OfficialResponsesPage() {
     setError("");
     setEditing({ ...row, citationText: toCitationText(row.citations), change_note: "" });
   }
+
+  const canApprove = staff?.role === "supervisor";
 
   async function save() {
     if (!editing?.question || !editing.answer) return;
@@ -111,7 +119,7 @@ export default function OfficialResponsesPage() {
         <div>
           <h1 className="font-display text-[20px] font-semibold" style={{ color: "var(--text-primary)" }}>Official responses</h1>
           <p className="mt-1 text-[12px]" style={{ color: "var(--text-tertiary)" }}>
-            Draft ministry-approved answers and publish them into the instant-answer and RAG pipeline.
+            Agents draft and submit. Supervisors approve ministry answers into the instant-answer and RAG pipeline.
           </p>
         </div>
         <div className="ml-auto flex flex-wrap gap-2">
@@ -170,8 +178,8 @@ export default function OfficialResponsesPage() {
                     <div className="mt-2 flex flex-wrap gap-2">
                       <button onClick={() => openEdit(r)} className="rounded-md px-2 py-1 text-[11px]" style={{ color: "var(--text-secondary)" }}>Edit</button>
                       {r.status === "draft" && <button onClick={() => action(r.id, submitOfficialResponse)} className="rounded-md px-2 py-1 text-[11px]" style={{ color: "var(--gold)" }}>Submit</button>}
-                      {r.status !== "approved" && r.status !== "archived" && <button onClick={() => action(r.id, approveOfficialResponse)} className="rounded-md px-2 py-1 text-[11px] font-semibold" style={{ color: "var(--accent)" }}>Approve</button>}
-                      {r.status !== "archived" && <button onClick={() => action(r.id, archiveOfficialResponse)} className="rounded-md px-2 py-1 text-[11px]" style={{ color: "var(--red)" }}>Archive</button>}
+                      {canApprove && r.status !== "approved" && r.status !== "archived" && <button onClick={() => action(r.id, approveOfficialResponse)} className="rounded-md px-2 py-1 text-[11px] font-semibold" style={{ color: "var(--accent)" }}>Approve</button>}
+                      {canApprove && r.status !== "archived" && <button onClick={() => action(r.id, archiveOfficialResponse)} className="rounded-md px-2 py-1 text-[11px]" style={{ color: "var(--red)" }}>Archive</button>}
                     </div>
                   </li>
                 );
@@ -230,10 +238,13 @@ export default function OfficialResponsesPage() {
             <h2 className="font-display text-[16px] font-semibold" style={{ color: "var(--text-primary)" }}>Publishing pipeline</h2>
             <ol className="mt-3 space-y-3 text-[12px]" style={{ color: "var(--text-secondary)" }}>
               <li><strong>Draft:</strong> write a ministry answer from a citizen question.</li>
-              <li><strong>Submit:</strong> mark it ready for official review.</li>
-              <li><strong>Approve:</strong> publish it to instant answers and semantic RAG retrieval.</li>
-              <li><strong>Archive:</strong> remove stale guidance without deleting history.</li>
+              <li><strong>Submit:</strong> agent marks it ready for official review.</li>
+              <li><strong>Approve:</strong> supervisor publishes it to instant answers and semantic RAG retrieval.</li>
+              <li><strong>Archive:</strong> supervisor removes stale guidance without deleting history.</li>
             </ol>
+            <p className="mt-3 rounded-lg px-3 py-2 text-[12px]" style={{ background: "var(--bg-secondary)", color: "var(--text-tertiary)" }}>
+              Current role: {staff?.role || "loading"}
+            </p>
           </Surface>
         )}
       </div>
