@@ -1,0 +1,58 @@
+{
+  "note": "Edit freely \u2014 curate.py scan re-applies on every run. First match wins. Rules only ever touch records whose last decision was automatic; manual decisions stick.",
+  "rules": [
+    {
+      "match": "promotion list|interview (list|schedule)|shortlist|vacancy|advert|recruitment",
+      "on": "name",
+      "category": "hr-admin",
+      "status": "rejected",
+      "reason": "hr/pii"
+    },
+    {
+      "match": "hbc (ventures|plus ?one)|ventures g7|plusone",
+      "on": "name",
+      "category": "commercial-textbook",
+      "status": "rejected",
+      "reason": "copyright"
+    },
+    {
+      "match": "scheme[- ]?cum|term \\d.*scheme|scheme.*term \\d|lesson plan",
+      "on": "name",
+      "category": "teaching-material",
+      "status": "needs_review",
+      "reason": "third-party teaching material"
+    },
+    {
+      "match": "\\bact\\b.*\\d{4}|\\[ ?act \\d+-\\d+ ?\\]|statutory instrument",
+      "on": "name",
+      "category": "legislation",
+      "status": "needs_review",
+      "reason": "legislation \u2014 consider citing the Veritas copy"
+    },
+    {
+      "match": "syllabus",
+      "on": "name",
+      "category": "syllabus",
+      "status": "needs_review"
+    },
+    {
+      "match": "circular|pay dates",
+      "on": "name",
+      "category": "circular",
+      "status": "needs_review"
+    },
+    {
+      "match": "^\\d{4}q\\d{2}|question paper|marking scheme",
+      "on": "name",
+      "category": "exam-paper",
+      "status": "needs_review",
+      "reason": "ZIMSEC exam material \u2014 check reproduction policy"
+    },
+    {
+      "match": "form(s)?\\b|\\bcdef\\b",
+      "on": "name",
+      "category": "form",
+      "status": "needs_review"
+    }
+  ]
+}

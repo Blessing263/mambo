@@ -38,3 +38,10 @@ submission/_proposal.html
 
 # local team contacts (PII) — not for git
 submission/*.local.md
+
+# staging area: raw bytes + runtime state stay local; manifests + rules are committable
+staging/*/raw/
+staging/*/frontier.json
+staging/*/.lock
+staging/runs.jsonl
+staging/acquire.log
