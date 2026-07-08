@@ -21,6 +21,17 @@ def assess(results: list[dict]) -> bool:
 def cite(result: dict) -> dict:
     text = (result.get("text") or "").strip()
     snippet = (text[:157] + "…") if len(text) > 160 else (text or None)
+    if result.get("source_kind") == "official_response":
+        cites = result.get("response_citations") or []
+        first = cites[0] if isinstance(cites, list) and cites else {}
+        return {
+            "title": first.get("title") or result.get("doc_title"),
+            "page": None,
+            "url": first.get("url") or result.get("source_url"),
+            "ministry": result.get("ministry_id"),
+            "snippet": snippet,
+            "doc_type": "web",
+        }
     url = result.get("source_url") or ""
     return {
         "title": result.get("doc_title"),

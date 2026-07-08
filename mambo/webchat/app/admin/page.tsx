@@ -117,9 +117,9 @@ export default function AdminDashboard() {
                 <li key={i} className="flex items-center gap-2 py-2">
                   <span className="flex-1 truncate text-[13px]" style={{ color: "var(--text-primary)" }}>{q.question}</span>
                   <span className="shrink-0 text-[11px]" style={{ color: "var(--text-tertiary)" }}>{q.count}×</span>
-                  <Link href={`/admin/reviewed?question=${encodeURIComponent(q.question)}`}
+                  <Link href={`/admin/responses?question=${encodeURIComponent(q.question)}`}
                     className="shrink-0 rounded-md px-2 py-1 text-[11px] font-semibold transition hover:opacity-90"
-                    style={{ background: "var(--accent-light)", color: "var(--accent-text)" }}>Curate →</Link>
+                    style={{ background: "var(--accent-light)", color: "var(--accent-text)" }}>Draft →</Link>
                 </li>
               ))}
             </ul>

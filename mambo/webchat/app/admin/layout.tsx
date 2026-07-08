@@ -59,8 +59,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
         <FlagRibbon height={2} />
       </header>
-      <nav className="mx-auto flex max-w-6xl gap-1 px-4 pt-4">
+      <nav className="mx-auto flex max-w-6xl flex-wrap gap-1 px-4 pt-4">
         <NavLink href="/admin" label="Dashboard" active={pathname === "/admin"} />
+        <NavLink href="/admin/questions" label="Question inbox" active={pathname === "/admin/questions"} />
+        <NavLink href="/admin/responses" label="Official responses" active={pathname === "/admin/responses"} />
+        <NavLink href="/admin/settings" label="Sources & handoff" active={pathname === "/admin/settings"} />
         <NavLink href="/admin/reviewed" label="Reviewed answers" active={pathname === "/admin/reviewed"} />
       </nav>
       <main className="mx-auto max-w-6xl px-4 py-5">{children}</main>

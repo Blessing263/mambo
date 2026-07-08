@@ -54,12 +54,52 @@ export interface AdminQuery {
   confident: boolean | null; answered: boolean | null;
   feedback: number | null; latency_ms: number | null; ministries: string[];
 }
+export interface AdminQuestion extends AdminQuery {
+  id: string;
+  evidence_status: "answered" | "partial" | "unsupported" | "declined";
+  reviewed: boolean;
+}
 export interface AdminStats {
   total: number; answered: number; fallback_rate: number | null; avg_feedback: number | null;
   token_count: number; avg_latency: number | null;
   top_questions: { question: string; count: number }[];
   top_unanswered: { question: string; count: number }[];
   series: { day: string | null; count: number }[];
+}
+export type OfficialResponseStatus = "draft" | "pending_review" | "approved" | "archived";
+export interface OfficialResponse {
+  id: string;
+  ministry_id: string;
+  question: string;
+  answer: string;
+  citations: any[];
+  service_area: string | null;
+  status: OfficialResponseStatus;
+  enabled: boolean;
+  valid_from: string | null;
+  review_due_at: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  submitted_at: string | null;
+  approved_at: string | null;
+  archived_at: string | null;
+}
+export interface OfficialResponseVersion {
+  id: string;
+  edited_by: string | null;
+  old_status: string | null;
+  new_status: string | null;
+  change_note: string | null;
+  created_at: string | null;
+}
+export interface MinistryProfile {
+  id: string;
+  name: string;
+  short_name: string;
+  contact: Contact;
+  domains: string[];
+  updated_at: string | null;
+  sources: { title: string; url: string; fetched_at: string | null; status: string }[];
 }
 
 export type StatusStep = "route" | "search" | "read" | "verify";

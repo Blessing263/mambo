@@ -193,7 +193,7 @@ def ask_stream(req: AskRequest, request: Request) -> StreamingResponse:
                 })
                 service._log_stream(
                     req.question, req.session_id, d.get("source_ministry", []),
-                    {"confident": False, "citations": []}, 0,
+                    {"confident": False, "citations": [], "evidence_status": "declined"}, 0,
                     client_ip=client_ip, user_agent=user_agent,
                 )
                 return
@@ -213,7 +213,8 @@ def ask_stream(req: AskRequest, request: Request) -> StreamingResponse:
                 })
                 service._log_stream(
                     req.question, req.session_id, r["source_ministry"],
-                    {"confident": True, "citations": r["citations"]}, 0,
+                    {"confident": True, "citations": r["citations"],
+                     "evidence_status": "answered", "reviewed": True}, 0,
                     client_ip=client_ip, user_agent=user_agent,
                 )
                 return
@@ -230,7 +231,8 @@ def ask_stream(req: AskRequest, request: Request) -> StreamingResponse:
                 })
                 service._log_stream(
                     req.question, req.session_id, [],
-                    {"confident": True, "citations": []}, 0,
+                    {"confident": True, "citations": [],
+                     "evidence_status": prep.get("evidence_status", "answered")}, 0,
                     client_ip=client_ip, user_agent=user_agent,
                 )
                 return
@@ -252,7 +254,7 @@ def ask_stream(req: AskRequest, request: Request) -> StreamingResponse:
                 })
                 service._log_stream(
                     req.question, req.session_id, fb["source_ministry"],
-                    {"confident": False, "citations": []}, 0,
+                    {"confident": False, "citations": [], "evidence_status": "unsupported"}, 0,
                     client_ip=client_ip, user_agent=user_agent,
                 )
                 return
@@ -320,7 +322,7 @@ def ask_stream(req: AskRequest, request: Request) -> StreamingResponse:
             token_count = max(1, len(full_answer) // 4)
             service._log_stream(
                 req.question, req.session_id, answering,
-                {"confident": True, "citations": citations}, 0,
+                {"confident": True, "citations": citations, "evidence_status": status}, 0,
                 token_count=token_count,
                 client_ip=client_ip, user_agent=user_agent,
             )

@@ -2,11 +2,13 @@
 -- The seam between Ingestion (writes) and RAG (reads). Every chunk is tagged by
 -- ministry for routing, and carries full provenance so every citation is verifiable.
 --
--- Embeddings: Qwen3-Embedding-8B, 4096 dimensions.
--- NOTE: pgvector 0.6.0 caps ANN indexes (ivfflat/hnsw) at 2000 dims, so at 4096 we
+-- Embeddings: OpenAI text-embedding-3-large, 3072 dimensions (priority provider;
+-- Ollama Qwen3-Embedding-8B 4096-dim is the offline fallback — see shared/embeddings.py).
+-- NOTE: pgvector 0.6.0 caps ANN indexes (ivfflat/hnsw) at 2000 dims, so at 3072 we
 -- use EXACT nearest-neighbour search (no ANN index). This is fast and accurate at
 -- demo scale (thousands of chunks). Scale path: upgrade pgvector >=0.7 and store as
--- halfvec(4096) for an HNSW index, or reduce dims via Matryoshka truncation.
+-- halfvec(3072) for an HNSW index, or reduce dims via Matryoshka truncation
+-- (text-embedding-3-large supports the `dimensions` request parameter).
 
 CREATE EXTENSION IF NOT EXISTS vector;
 
@@ -74,7 +76,7 @@ CREATE TABLE IF NOT EXISTS chunks (
     page         int,                              -- for "Source: …, p.12"
     section      text,                             -- nearest heading, if known
     token_count  int,
-    embedding    vector(4096),                     -- nullable; NULL = pending embed
+    embedding    vector(3072),                     -- nullable; NULL = pending embed
     content_hash text        NOT NULL,
     created_at   timestamptz NOT NULL DEFAULT now(),
     dim          smallint                          -- embedding dimension label (e.g. 4096)
@@ -101,6 +103,8 @@ CREATE TABLE IF NOT EXISTS query_log (
     detected_ministries text[]     NOT NULL DEFAULT '{}',
     confident          boolean,
     answered           boolean,
+    evidence_status    text,                          -- answered | partial | unsupported | declined
+    reviewed           boolean     NOT NULL DEFAULT false,
     citations          jsonb       NOT NULL DEFAULT '[]',
     latency_ms         int,
     feedback           smallint,                     -- +1 / -1 / null
@@ -110,6 +114,7 @@ CREATE TABLE IF NOT EXISTS query_log (
 );
 CREATE INDEX IF NOT EXISTS idx_query_log_asked ON query_log (asked_at);
 CREATE INDEX IF NOT EXISTS idx_query_log_detected ON query_log USING GIN (detected_ministries);
+CREATE INDEX IF NOT EXISTS idx_query_log_evidence_status ON query_log (evidence_status);
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Reviewed-answer cache (Phase 2) — human-vetted answers for top questions so the
@@ -131,6 +136,71 @@ ALTER TABLE reviewed_answers ADD COLUMN IF NOT EXISTS question_norm text;
 CREATE INDEX IF NOT EXISTS idx_reviewed_enabled
     ON reviewed_answers (ministry_id, question_norm) WHERE enabled;
 CREATE INDEX IF NOT EXISTS idx_reviewed_ministry ON reviewed_answers (ministry_id);
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Official responses — ministry-authored answers promoted from repeated citizen
+-- questions. Drafts move through review, then approved responses are served as
+-- exact matches and embedded for semantic RAG retrieval.
+-- ─────────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS official_responses (
+    id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    ministry_id     text        NOT NULL REFERENCES ministries(id) ON DELETE CASCADE,
+    question        text        NOT NULL,
+    question_norm   text        NOT NULL,
+    answer          text        NOT NULL,
+    citations       jsonb       NOT NULL DEFAULT '[]',
+    service_area    text,
+    status          text        NOT NULL DEFAULT 'draft', -- draft | pending_review | approved | archived
+    enabled         boolean     NOT NULL DEFAULT true,
+    valid_from      date,
+    review_due_at   date,
+    created_by      uuid,
+    submitted_by    uuid,
+    approved_by     uuid,
+    archived_by     uuid,
+    created_at      timestamptz NOT NULL DEFAULT now(),
+    updated_at      timestamptz NOT NULL DEFAULT now(),
+    submitted_at    timestamptz,
+    approved_at     timestamptz,
+    archived_at     timestamptz
+);
+CREATE INDEX IF NOT EXISTS idx_official_responses_ministry
+    ON official_responses (ministry_id, updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_official_responses_status
+    ON official_responses (ministry_id, status);
+CREATE INDEX IF NOT EXISTS idx_official_responses_exact
+    ON official_responses (ministry_id, question_norm)
+    WHERE status = 'approved' AND enabled;
+
+CREATE TABLE IF NOT EXISTS official_response_versions (
+    id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    response_id  uuid        NOT NULL REFERENCES official_responses(id) ON DELETE CASCADE,
+    edited_by    uuid,
+    old_status   text,
+    new_status   text,
+    old_answer   text,
+    new_answer   text,
+    change_note  text,
+    created_at   timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_official_response_versions_response
+    ON official_response_versions (response_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS official_response_chunks (
+    id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    response_id  uuid        NOT NULL REFERENCES official_responses(id) ON DELETE CASCADE,
+    ministry_id   text        NOT NULL REFERENCES ministries(id) ON DELETE CASCADE,
+    chunk_index   int         NOT NULL DEFAULT 0,
+    text          text        NOT NULL,
+    embedding     vector(3072),                     -- nullable; NULL = pending embed
+    dim           smallint,
+    created_at    timestamptz NOT NULL DEFAULT now(),
+    UNIQUE (response_id, chunk_index)
+);
+CREATE INDEX IF NOT EXISTS idx_official_response_chunks_ministry
+    ON official_response_chunks (ministry_id);
+CREATE INDEX IF NOT EXISTS idx_official_response_chunks_pending
+    ON official_response_chunks (id) WHERE embedding IS NULL;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Admin portal (Track 3) — ministry-staff auth + reviewed-answer curation.
@@ -175,5 +245,17 @@ END $$;
 DO $$ BEGIN
     ALTER TABLE query_log ADD CONSTRAINT chk_feedback
         CHECK (feedback IN (-1, 1));
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+    ALTER TABLE query_log ADD CONSTRAINT chk_query_evidence_status
+        CHECK (evidence_status IS NULL OR evidence_status IN ('answered', 'partial', 'unsupported', 'declined'));
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+    ALTER TABLE official_responses ADD CONSTRAINT chk_official_response_status
+        CHECK (status IN ('draft', 'pending_review', 'approved', 'archived'));
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;

@@ -1,5 +1,6 @@
-"""Retrieval — embed the question (Qwen 4096-dim, local CPU, ~1.5s warm) and run
-an exact cosine search over the Knowledge Store, optionally scoped to ministries.
+"""Retrieval — embed the question (OpenAI 3072-dim priority, Ollama fallback; see
+shared/embeddings.py) and run an exact cosine search over the Knowledge Store,
+optionally scoped to ministries.
 
 When multiple versions of the same document exist (e.g. Labour Act 2003, 2005,
 2019, 2025), the most recently fetched version is ranked higher via a recency
@@ -24,6 +25,23 @@ _BASE_SQL = """
     FROM chunks c
     JOIN documents d ON d.id = c.document_id
     {where} AND c.embedding IS NOT NULL
+    ORDER BY c.embedding <=> %(qvec)s
+    LIMIT %(k)s;
+"""
+
+_OFFICIAL_SQL = """
+    SELECT c.id, c.ministry_id, c.text, NULL::int AS page, NULL::text AS section,
+           ('Official response — ' || r.question) AS doc_title,
+           coalesce(r.citations->0->>'url', 'mambo:official-response:' || r.id::text) AS source_url,
+           NULL::date AS published_date, r.approved_at AS fetched_at,
+           1 - (c.embedding <=> %(qvec)s) AS score,
+           'official_response' AS source_kind,
+           r.id AS response_id,
+           r.citations AS response_citations
+    FROM official_response_chunks c
+    JOIN official_responses r ON r.id = c.response_id
+    {where} AND c.embedding IS NOT NULL
+      AND r.status = 'approved' AND r.enabled
     ORDER BY c.embedding <=> %(qvec)s
     LIMIT %(k)s;
 """
@@ -81,9 +99,8 @@ def _recency_boost(results: list[dict], k: int) -> list[dict]:
     return boosted[:k]
 
 
-def search(question: str, ministry_ids: list[str] | None = None, k: int = 6) -> list[dict]:
-    qvec = np.asarray(embed_query(question), dtype=np.float32)
-    where = ""
+def _search_documents(qvec: np.ndarray, ministry_ids: list[str] | None, k: int) -> list[dict]:
+    where = "WHERE true"
     params: dict = {"qvec": qvec, "k": k * _OVERSAMPLE}
     if ministry_ids:
         where = "WHERE c.ministry_id = ANY(%(ministries)s)"
@@ -92,3 +109,30 @@ def search(question: str, ministry_ids: list[str] | None = None, k: int = 6) -> 
         cur.execute(_BASE_SQL.format(where=where), params)
         results = cur.fetchall()
     return _recency_boost(results, k)
+
+
+def _search_official(qvec: np.ndarray, ministry_ids: list[str] | None, k: int) -> list[dict]:
+    where = "WHERE true"
+    params: dict = {"qvec": qvec, "k": k}
+    if ministry_ids:
+        where = "WHERE c.ministry_id = ANY(%(ministries)s)"
+        params["ministries"] = list(ministry_ids)
+    try:
+        with get_conn() as conn, conn.cursor() as cur:
+            cur.execute(_OFFICIAL_SQL.format(where=where), params)
+            rows = cur.fetchall()
+    except Exception:
+        # Older deployments may not have the official-response tables yet.
+        return []
+    # Human-approved ministry responses should win close calls without hiding
+    # obviously stronger documentary evidence.
+    return [{**r, "score": r["score"] + 0.08} for r in rows]
+
+
+def search(question: str, ministry_ids: list[str] | None = None, k: int = 6) -> list[dict]:
+    qvec = np.asarray(embed_query(question), dtype=np.float32)
+    docs = _search_documents(qvec, ministry_ids, k)
+    official = _search_official(qvec, ministry_ids, k)
+    combined = [*official, *docs]
+    combined.sort(key=lambda x: x["score"], reverse=True)
+    return combined[:k]

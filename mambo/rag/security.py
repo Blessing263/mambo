@@ -64,8 +64,13 @@ _WINDOWS: dict[str, tuple[int, int]] = {  # seconds, max
     "/admin/me":       (60, 60),
     "/admin/stats":    (60, 20),
     "/admin/queries":  (60, 30),
+    "/admin/questions": (60, 30),
+    "/admin/profile": (60, 30),
+    "/admin/profile-mutate": (60, 10),
     "/admin/reviewed-list":  (60, 30),
     "/admin/reviewed-mutate": (60, 20),
+    "/admin/official-list": (60, 30),
+    "/admin/official-mutate": (60, 20),
     "/ask/stream": (60, 30),
     "/feedback": (60, 20),
 }

@@ -116,12 +116,15 @@ def _log(question, session_id, detected, resp, latency_ms, token_count: int = 0,
                     """
                     INSERT INTO query_log
                         (session_id, question, detected_ministries, confident,
-                         answered, citations, latency_ms, token_count, client_ip, user_agent)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                         answered, evidence_status, reviewed, citations, latency_ms,
+                         token_count, client_ip, user_agent)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
                     """,
                     (
                         session_id, question, detected, resp["confident"],
-                        resp["confident"], json.dumps(resp["citations"]), latency_ms,
+                        resp["confident"], resp.get("evidence_status"),
+                        bool(resp.get("reviewed")),
+                        json.dumps(resp["citations"]), latency_ms,
                         token_count,
                         client_ip[:45] if client_ip else None,
                         user_agent[:500] if user_agent else None,
@@ -159,16 +162,31 @@ def get_reviewed(question: str, ministry_filter: str | None = None) -> dict | No
         with get_conn() as conn, conn.cursor() as cur:
             if ministry_filter:
                 cur.execute(
-                    "SELECT ministry_id, answer, citations FROM reviewed_answers "
-                    "WHERE question_norm = %s AND ministry_id = %s AND enabled "
+                    "SELECT ministry_id, answer, citations FROM official_responses "
+                    "WHERE question_norm = %s AND ministry_id = %s "
+                    "AND status = 'approved' AND enabled "
                     "ORDER BY updated_at DESC LIMIT 1;",
                     (norm, ministry_filter))
             else:
                 cur.execute(
-                    "SELECT ministry_id, answer, citations FROM reviewed_answers "
-                    "WHERE question_norm = %s AND enabled ORDER BY updated_at DESC LIMIT 1;",
+                    "SELECT ministry_id, answer, citations FROM official_responses "
+                    "WHERE question_norm = %s AND status = 'approved' AND enabled "
+                    "ORDER BY updated_at DESC LIMIT 1;",
                     (norm,))
             row = cur.fetchone()
+            if not row:
+                if ministry_filter:
+                    cur.execute(
+                        "SELECT ministry_id, answer, citations FROM reviewed_answers "
+                        "WHERE question_norm = %s AND ministry_id = %s AND enabled "
+                        "ORDER BY updated_at DESC LIMIT 1;",
+                        (norm, ministry_filter))
+                else:
+                    cur.execute(
+                        "SELECT ministry_id, answer, citations FROM reviewed_answers "
+                        "WHERE question_norm = %s AND enabled ORDER BY updated_at DESC LIMIT 1;",
+                        (norm,))
+                row = cur.fetchone()
     except Exception:
         return None
     if not row:
@@ -205,7 +223,9 @@ def _refresh_rev_known() -> None:
     try:
         with get_conn() as conn, conn.cursor() as cur:
             cur.execute(
-                "SELECT question_norm FROM reviewed_answers WHERE enabled;")
+                "SELECT question_norm FROM reviewed_answers WHERE enabled "
+                "UNION SELECT question_norm FROM official_responses "
+                "WHERE status = 'approved' AND enabled;")
             known = {r["question_norm"] for r in cur.fetchall()}
         with _rev_known_lock:
             _rev_known = known
@@ -259,14 +279,14 @@ def ask(question: str, *, history: list[dict] | None = None,
             "fallback_contact": contacts or None,
         }
         _log(question, session_id, ref or [], resp, int((time.time() - t0) * 1000),
-             client_ip, user_agent)
+             client_ip=client_ip, user_agent=user_agent)
         return resp
 
     # ── Reviewed-answer short-circuit — serve a ministry-vetted answer instantly ──
     rev = get_reviewed(question, ministry_filter)
     if rev:
         _log(question, session_id, rev["source_ministry"], rev,
-             int((time.time() - t0) * 1000), client_ip, user_agent)
+             int((time.time() - t0) * 1000), client_ip=client_ip, user_agent=user_agent)
         return rev
 
     # ── Intent gate — greetings, thanks, capability, off-topic ──
@@ -282,7 +302,7 @@ def ask(question: str, *, history: list[dict] | None = None,
             "fallback_contact": None,
         }
         _log(question, session_id, [], resp, int((time.time() - t0) * 1000),
-             client_ip, user_agent)
+             client_ip=client_ip, user_agent=user_agent)
         return resp
 
     # ── Normal RAG path ──
@@ -316,7 +336,7 @@ def ask(question: str, *, history: list[dict] | None = None,
         }
 
     _log(question, session_id, detected, resp, int((time.time() - t0) * 1000),
-         client_ip, user_agent)
+         client_ip=client_ip, user_agent=user_agent)
     return resp
 
 
